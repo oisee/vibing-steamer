@@ -4,7 +4,9 @@ package adt
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -270,4 +272,133 @@ func TestIntegration_RunUnitTests(t *testing.T) {
 			t.Logf("    [%s] %s (%d µs)", status, method.Name, method.ExecutionTime)
 		}
 	}
+}
+
+// --- CRUD Integration Tests ---
+
+// TestIntegration_CRUD_FullWorkflow tests the complete CRUD workflow:
+// Create -> Lock -> Update -> Activate -> Unlock -> Delete
+func TestIntegration_CRUD_FullWorkflow(t *testing.T) {
+	client := getIntegrationClient(t)
+	ctx := context.Background()
+
+	// Use a unique test program name with timestamp to avoid conflicts
+	timestamp := time.Now().Unix() % 100000 // Last 5 digits
+	programName := fmt.Sprintf("ZMCP_%05d", timestamp)
+	packageName := "$TMP" // Local package, no transport needed
+	t.Logf("Test program name: %s", programName)
+
+	// Step 1: Create a new program
+	t.Log("Step 1: Creating program...")
+	err := client.CreateObject(ctx, CreateObjectOptions{
+		ObjectType:  ObjectTypeProgram,
+		Name:        programName,
+		Description: "Test program for MCP CRUD integration test",
+		PackageName: packageName,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create program: %v", err)
+	}
+	t.Logf("Created program: %s", programName)
+
+	// Cleanup: ensure we delete the program at the end
+	defer func() {
+		t.Log("Cleanup: Deleting program...")
+		objectURL := GetObjectURL(ObjectTypeProgram, programName, "")
+
+		// Lock for delete
+		lock, err := client.LockObject(ctx, objectURL, "MODIFY")
+		if err != nil {
+			t.Logf("Cleanup: Failed to lock for delete: %v", err)
+			return
+		}
+
+		err = client.DeleteObject(ctx, objectURL, lock.LockHandle, "")
+		if err != nil {
+			t.Logf("Cleanup: Failed to delete: %v", err)
+			// Try to unlock
+			client.UnlockObject(ctx, objectURL, lock.LockHandle)
+		} else {
+			t.Log("Cleanup: Program deleted successfully")
+		}
+	}()
+
+	objectURL := GetObjectURL(ObjectTypeProgram, programName, "")
+	t.Logf("Object URL: %s", objectURL)
+
+	// Step 2: Lock the object
+	t.Log("Step 2: Locking object...")
+	lock, err := client.LockObject(ctx, objectURL, "MODIFY")
+	if err != nil {
+		t.Fatalf("Failed to lock object: %v", err)
+	}
+	t.Logf("Lock acquired: %s (local: %v)", lock.LockHandle, lock.IsLocal)
+
+	// Step 3: Update the source
+	t.Log("Step 3: Updating source...")
+	newSource := `REPORT ztest_mcp_crud.
+* Test program created by MCP CRUD integration test
+WRITE 'Hello from MCP!'.`
+
+	sourceURL := GetSourceURL(ObjectTypeProgram, programName, "")
+	err = client.UpdateSource(ctx, sourceURL, newSource, lock.LockHandle, "")
+	if err != nil {
+		// Unlock before failing
+		client.UnlockObject(ctx, objectURL, lock.LockHandle)
+		t.Fatalf("Failed to update source: %v", err)
+	}
+	t.Log("Source updated successfully")
+
+	// Step 4: Unlock the object (must unlock before activation)
+	t.Log("Step 4: Unlocking object...")
+	err = client.UnlockObject(ctx, objectURL, lock.LockHandle)
+	if err != nil {
+		t.Fatalf("Failed to unlock: %v", err)
+	}
+	t.Log("Object unlocked successfully")
+
+	// Step 5: Activate the object
+	t.Log("Step 5: Activating object...")
+	activateResult, err := client.Activate(ctx, objectURL, programName)
+	if err != nil {
+		t.Fatalf("Failed to activate: %v", err)
+	}
+	t.Logf("Activation result: success=%v, messages=%d", activateResult.Success, len(activateResult.Messages))
+
+	// Step 6: Verify the source was saved
+	t.Log("Step 6: Verifying source...")
+	source, err := client.GetProgram(ctx, programName)
+	if err != nil {
+		t.Fatalf("Failed to read back source: %v", err)
+	}
+
+	if !strings.Contains(source, "Hello from MCP") {
+		t.Errorf("Source doesn't contain expected content")
+	} else {
+		t.Log("Source verified successfully")
+	}
+
+	t.Log("CRUD workflow completed successfully!")
+}
+
+// TestIntegration_LockUnlock tests just the lock/unlock cycle
+func TestIntegration_LockUnlock(t *testing.T) {
+	client := getIntegrationClient(t)
+	ctx := context.Background()
+
+	// Try to lock a standard program (should exist in any system)
+	objectURL := "/sap/bc/adt/programs/programs/SAPMSSY0"
+
+	lock, err := client.LockObject(ctx, objectURL, "MODIFY")
+	if err != nil {
+		t.Skipf("Could not lock SAPMSSY0: %v", err)
+	}
+	t.Logf("Lock acquired: handle=%s, isLocal=%v", lock.LockHandle, lock.IsLocal)
+
+	// Immediately unlock
+	err = client.UnlockObject(ctx, objectURL, lock.LockHandle)
+	if err != nil {
+		t.Fatalf("Failed to unlock: %v", err)
+	}
+	t.Log("Object unlocked successfully")
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -251,6 +252,96 @@ func (s *Server) registerTools() {
 			mcp.Description("Include long duration tests (default: false)"),
 		),
 	), s.handleRunUnitTests)
+
+	// --- CRUD Operations ---
+
+	// LockObject
+	s.mcpServer.AddTool(mcp.NewTool("LockObject",
+		mcp.WithDescription("Acquire an edit lock on an ABAP object"),
+		mcp.WithString("object_url",
+			mcp.Required(),
+			mcp.Description("ADT URL of the object (e.g., /sap/bc/adt/programs/programs/ZTEST)"),
+		),
+		mcp.WithString("access_mode",
+			mcp.Description("Access mode: MODIFY (default) or READ"),
+		),
+	), s.handleLockObject)
+
+	// UnlockObject
+	s.mcpServer.AddTool(mcp.NewTool("UnlockObject",
+		mcp.WithDescription("Release an edit lock on an ABAP object"),
+		mcp.WithString("object_url",
+			mcp.Required(),
+			mcp.Description("ADT URL of the object (e.g., /sap/bc/adt/programs/programs/ZTEST)"),
+		),
+		mcp.WithString("lock_handle",
+			mcp.Required(),
+			mcp.Description("Lock handle from LockObject"),
+		),
+	), s.handleUnlockObject)
+
+	// UpdateSource
+	s.mcpServer.AddTool(mcp.NewTool("UpdateSource",
+		mcp.WithDescription("Write source code to an ABAP object (requires lock)"),
+		mcp.WithString("object_url",
+			mcp.Required(),
+			mcp.Description("ADT URL of the object (e.g., /sap/bc/adt/programs/programs/ZTEST)"),
+		),
+		mcp.WithString("source",
+			mcp.Required(),
+			mcp.Description("ABAP source code to write"),
+		),
+		mcp.WithString("lock_handle",
+			mcp.Required(),
+			mcp.Description("Lock handle from LockObject"),
+		),
+		mcp.WithString("transport",
+			mcp.Description("Transport request number (optional for local packages)"),
+		),
+	), s.handleUpdateSource)
+
+	// CreateObject
+	s.mcpServer.AddTool(mcp.NewTool("CreateObject",
+		mcp.WithDescription("Create a new ABAP object"),
+		mcp.WithString("object_type",
+			mcp.Required(),
+			mcp.Description("Object type: PROG/P (program), CLAS/OC (class), INTF/OI (interface), PROG/I (include), FUGR/F (function group), FUGR/FF (function module)"),
+		),
+		mcp.WithString("name",
+			mcp.Required(),
+			mcp.Description("Object name (e.g., ZTEST_PROGRAM)"),
+		),
+		mcp.WithString("description",
+			mcp.Required(),
+			mcp.Description("Object description"),
+		),
+		mcp.WithString("package_name",
+			mcp.Required(),
+			mcp.Description("Package name (e.g., $TMP for local, ZPACKAGE for transportable)"),
+		),
+		mcp.WithString("transport",
+			mcp.Description("Transport request number (required for non-local packages)"),
+		),
+		mcp.WithString("parent_name",
+			mcp.Description("Parent name (required for function modules - the function group name)"),
+		),
+	), s.handleCreateObject)
+
+	// DeleteObject
+	s.mcpServer.AddTool(mcp.NewTool("DeleteObject",
+		mcp.WithDescription("Delete an ABAP object (requires lock)"),
+		mcp.WithString("object_url",
+			mcp.Required(),
+			mcp.Description("ADT URL of the object (e.g., /sap/bc/adt/programs/programs/ZTEST)"),
+		),
+		mcp.WithString("lock_handle",
+			mcp.Required(),
+			mcp.Description("Lock handle from LockObject"),
+		),
+		mcp.WithString("transport",
+			mcp.Description("Transport request number (optional for local packages)"),
+		),
+	), s.handleDeleteObject)
 }
 
 // newToolResultError creates an error result for tool execution failures.
@@ -556,4 +647,159 @@ func (s *Server) handleRunUnitTests(ctx context.Context, request mcp.CallToolReq
 
 	output, _ := json.MarshalIndent(result, "", "  ")
 	return mcp.NewToolResultText(string(output)), nil
+}
+
+// --- CRUD Handlers ---
+
+func (s *Server) handleLockObject(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	objectURL, ok := request.Params.Arguments["object_url"].(string)
+	if !ok || objectURL == "" {
+		return newToolResultError("object_url is required"), nil
+	}
+
+	accessMode := "MODIFY"
+	if am, ok := request.Params.Arguments["access_mode"].(string); ok && am != "" {
+		accessMode = am
+	}
+
+	result, err := s.adtClient.LockObject(ctx, objectURL, accessMode)
+	if err != nil {
+		return newToolResultError(fmt.Sprintf("Failed to lock object: %v", err)), nil
+	}
+
+	output, _ := json.MarshalIndent(result, "", "  ")
+	return mcp.NewToolResultText(string(output)), nil
+}
+
+func (s *Server) handleUnlockObject(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	objectURL, ok := request.Params.Arguments["object_url"].(string)
+	if !ok || objectURL == "" {
+		return newToolResultError("object_url is required"), nil
+	}
+
+	lockHandle, ok := request.Params.Arguments["lock_handle"].(string)
+	if !ok || lockHandle == "" {
+		return newToolResultError("lock_handle is required"), nil
+	}
+
+	err := s.adtClient.UnlockObject(ctx, objectURL, lockHandle)
+	if err != nil {
+		return newToolResultError(fmt.Sprintf("Failed to unlock object: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText("Object unlocked successfully"), nil
+}
+
+func (s *Server) handleUpdateSource(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	objectURL, ok := request.Params.Arguments["object_url"].(string)
+	if !ok || objectURL == "" {
+		return newToolResultError("object_url is required"), nil
+	}
+
+	source, ok := request.Params.Arguments["source"].(string)
+	if !ok || source == "" {
+		return newToolResultError("source is required"), nil
+	}
+
+	lockHandle, ok := request.Params.Arguments["lock_handle"].(string)
+	if !ok || lockHandle == "" {
+		return newToolResultError("lock_handle is required"), nil
+	}
+
+	transport := ""
+	if t, ok := request.Params.Arguments["transport"].(string); ok {
+		transport = t
+	}
+
+	// Append /source/main to object URL if not already present
+	sourceURL := objectURL
+	if !strings.HasSuffix(sourceURL, "/source/main") {
+		sourceURL = objectURL + "/source/main"
+	}
+
+	err := s.adtClient.UpdateSource(ctx, sourceURL, source, lockHandle, transport)
+	if err != nil {
+		return newToolResultError(fmt.Sprintf("Failed to update source: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText("Source updated successfully"), nil
+}
+
+func (s *Server) handleCreateObject(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	objectType, ok := request.Params.Arguments["object_type"].(string)
+	if !ok || objectType == "" {
+		return newToolResultError("object_type is required"), nil
+	}
+
+	name, ok := request.Params.Arguments["name"].(string)
+	if !ok || name == "" {
+		return newToolResultError("name is required"), nil
+	}
+
+	description, ok := request.Params.Arguments["description"].(string)
+	if !ok || description == "" {
+		return newToolResultError("description is required"), nil
+	}
+
+	packageName, ok := request.Params.Arguments["package_name"].(string)
+	if !ok || packageName == "" {
+		return newToolResultError("package_name is required"), nil
+	}
+
+	transport := ""
+	if t, ok := request.Params.Arguments["transport"].(string); ok {
+		transport = t
+	}
+
+	parentName := ""
+	if p, ok := request.Params.Arguments["parent_name"].(string); ok {
+		parentName = p
+	}
+
+	opts := adt.CreateObjectOptions{
+		ObjectType:  adt.CreatableObjectType(objectType),
+		Name:        name,
+		Description: description,
+		PackageName: packageName,
+		Transport:   transport,
+		ParentName:  parentName,
+	}
+
+	err := s.adtClient.CreateObject(ctx, opts)
+	if err != nil {
+		return newToolResultError(fmt.Sprintf("Failed to create object: %v", err)), nil
+	}
+
+	// Return the object URL for convenience
+	objURL := adt.GetObjectURL(opts.ObjectType, opts.Name, opts.ParentName)
+	result := map[string]string{
+		"status":     "created",
+		"object_url": objURL,
+	}
+	output, _ := json.MarshalIndent(result, "", "  ")
+	return mcp.NewToolResultText(string(output)), nil
+}
+
+func (s *Server) handleDeleteObject(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	objectURL, ok := request.Params.Arguments["object_url"].(string)
+	if !ok || objectURL == "" {
+		return newToolResultError("object_url is required"), nil
+	}
+
+	lockHandle, ok := request.Params.Arguments["lock_handle"].(string)
+	if !ok || lockHandle == "" {
+		return newToolResultError("lock_handle is required"), nil
+	}
+
+	transport := ""
+	if t, ok := request.Params.Arguments["transport"].(string); ok {
+		transport = t
+	}
+
+	err := s.adtClient.DeleteObject(ctx, objectURL, lockHandle, transport)
+	if err != nil {
+		return newToolResultError(fmt.Sprintf("Failed to delete object: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText("Object deleted successfully"), nil
 }

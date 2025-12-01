@@ -182,6 +182,11 @@ func (t *Transport) retryRequest(ctx context.Context, path string, opts *Request
 	t.setDefaultHeaders(req, opts)
 	req.Header.Set("X-CSRF-Token", t.getCSRFToken())
 
+	// Ensure session type header is set for retry
+	if t.config.SessionType == SessionStateful {
+		req.Header.Set("X-sap-adt-sessiontype", "stateful")
+	}
+
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("executing retry request: %w", err)
@@ -223,6 +228,11 @@ func (t *Transport) fetchCSRFToken(ctx context.Context) error {
 	req.SetBasicAuth(t.config.Username, t.config.Password)
 	req.Header.Set("X-CSRF-Token", "fetch")
 	req.Header.Set("Accept", "*/*")
+
+	// Set session type header for stateful sessions
+	if t.config.SessionType == SessionStateful {
+		req.Header.Set("X-sap-adt-sessiontype", "stateful")
+	}
 
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
@@ -303,11 +313,12 @@ func (t *Transport) setDefaultHeaders(req *http.Request, opts *RequestOptions) {
 		req.Header.Set(k, v)
 	}
 
-	// Set session header if stateful
-	if t.config.SessionType == SessionStateful {
-		if sessionID := t.getSessionID(); sessionID != "" {
-			req.Header.Set("X-sap-adt-sessiontype", "stateful")
-		}
+	// Set session header based on session type
+	switch t.config.SessionType {
+	case SessionStateful:
+		req.Header.Set("X-sap-adt-sessiontype", "stateful")
+	case SessionStateless:
+		req.Header.Set("X-sap-adt-sessiontype", "stateless")
 	}
 }
 
