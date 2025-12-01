@@ -175,21 +175,24 @@ go build -o mcp-abap-adt-go ./cmd/mcp-abap-adt-go
 
 ```
 mcp-abap-adt-go/
-├── cmd/mcp-abap-adt-go/    # Main entry point
+├── cmd/mcp-abap-adt-go/     # Main entry point
+│   └── main.go              # MCP server startup
 ├── pkg/adt/                 # ADT client library
-│   ├── client.go           # Main client facade
-│   ├── config.go           # Configuration
-│   ├── http.go             # HTTP transport with CSRF & session handling
-│   ├── sources.go          # Source retrieval operations
-│   ├── crud.go             # CRUD operations (create, update, delete, lock)
-│   ├── devtools.go         # Development tools (syntax check, activate, unit tests)
-│   ├── codeintel.go        # Code intelligence (definition, references, completion)
-│   ├── workflows.go        # High-level workflow operations
-│   └── xml.go              # XML parsing utilities
-├── internal/mcp/           # MCP server implementation
-│   └── server.go           # Tool registration and handlers
-└── testdata/               # Test fixtures
+│   ├── client.go            # Main client facade + read operations
+│   ├── config.go            # Configuration from environment
+│   ├── http.go              # HTTP transport with CSRF & session handling
+│   ├── crud.go              # CRUD operations (lock, unlock, create, update, delete)
+│   ├── devtools.go          # Development tools (syntax check, activate, unit tests)
+│   ├── codeintel.go         # Code intelligence (definition, references, completion)
+│   ├── workflows.go         # High-level workflow operations
+│   └── xml.go               # XML parsing utilities
+├── internal/mcp/            # MCP server implementation
+│   └── server.go            # Tool registration and handlers (36 tools)
+├── reports/                 # Project documentation and status
+└── testdata/                # Test fixtures
 ```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 
 ## Comparison with TypeScript MCP
 

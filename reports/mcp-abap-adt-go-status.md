@@ -264,20 +264,21 @@ mcp-abap-adt-go/
 │   └── main.go                 # Entry point
 ├── internal/mcp/
 │   └── server.go               # MCP server + handlers (36 tools)
-└── pkg/adt/
-    ├── client.go               # ADT client (read ops)
-    ├── sources.go              # Source retrieval operations
-    ├── crud.go                 # CRUD ops (lock, unlock, create, update, delete, class includes)
-    ├── devtools.go             # Dev tools (syntax, activate, unit tests)
-    ├── codeintel.go            # Code intelligence (definition, references, completion, formatter)
-    ├── workflows.go            # High-level workflow operations
-    ├── http.go                 # HTTP transport + CSRF + stateful sessions
-    ├── config.go               # Configuration
-    ├── xml.go                  # XML types
-    ├── client_test.go          # Unit tests
-    ├── http_test.go            # Transport tests
-    └── integration_test.go     # Integration tests (24 tests)
+├── pkg/adt/
+│   ├── client.go               # ADT client facade + read operations
+│   ├── crud.go                 # CRUD ops (lock, unlock, create, update, delete, class includes)
+│   ├── devtools.go             # Dev tools (syntax, activate, unit tests)
+│   ├── codeintel.go            # Code intelligence (definition, references, completion, formatter)
+│   ├── workflows.go            # High-level workflow operations
+│   ├── http.go                 # HTTP transport + CSRF + stateful sessions
+│   ├── config.go               # Configuration
+│   ├── xml.go                  # XML types
+│   └── *_test.go               # Unit and integration tests
+├── reports/                    # Project documentation and status
+└── testdata/                   # Test fixtures
 ```
+
+See [ARCHITECTURE.md](../ARCHITECTURE.md) for detailed architecture documentation.
 
 ---
 
