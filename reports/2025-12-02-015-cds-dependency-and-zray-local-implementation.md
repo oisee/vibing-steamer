@@ -3,6 +3,7 @@
 **Date:** 2025-12-02
 **Status:** 🧠 Brainstorming
 **Related:** Roadmap updates for future features
+**Investigation Report:** [CDS and $ZRAY Endpoint Investigation](2025-12-02-016-cds-and-zray-endpoint-investigation.md)
 
 ---
 
@@ -607,4 +608,40 @@ The hybrid approach gives us:
 - ✅ Offline capability with caching
 - ✅ Progressive enhancement path
 
-**Next Action:** Investigate ADT endpoints for CDS dependencies and check for existing $ZRAY HTTP services.
+**Next Action:** ~~Investigate ADT endpoints for CDS dependencies and check for existing $ZRAY HTTP services.~~ ✅ **COMPLETED**
+
+---
+
+## Investigation Results Summary
+
+See detailed investigation report: [2025-12-02-016-cds-and-zray-endpoint-investigation.md](2025-12-02-016-cds-and-zray-endpoint-investigation.md)
+
+### Key Findings
+
+**CDS Dependencies:** ✅ **REST API EXISTS**
+- Handler: `CL_CDS_RES_DEPENDENCIES` (SABP_UNIT_DOUBLE_CDS_CORE)
+- Parser: `CL_CDS_TEST_DDL_HIER_PARSER`
+- Analyzer: `CL_DDLS_DEPENDENCY_VISITOR` (SDDIC_ADT_DDLS_TOOLS)
+- Status: **Ready for implementation (2-3 days)**
+
+**$ZRAY Framework:** ❌ **NO REST API**
+- 26+ classes discovered in $ZRAY_00, $ZRAY_10, $ZLLM_00
+- No HTTP/REST/OData wrapper found
+- Recommendation: **Cache-First Hybrid approach**
+  1. RFC call to $ZRAY (if available)
+  2. Fallback to local Go parser
+  3. Cache results for offline use
+
+### Updated Recommendations
+
+**Immediate Next Step:**
+1. Verify CDS dependency endpoint with real test (1 day)
+2. Implement `GetCDSDependencies` MCP tool (2 days)
+3. Check for RFC wrapper for $ZRAY (1 day)
+4. Prototype local Go parser (5 days)
+
+**Implementation Timeline:**
+- Week 1: CDS dependencies ✅
+- Week 2-3: RFC check + parser design
+- Week 4-6: Local parser implementation
+- Week 7: Hybrid integration

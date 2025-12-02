@@ -116,7 +116,7 @@ Comparison of ADT capabilities across implementations:
 |------|-------------|
 | `LockObject` | Acquire edit lock on an ABAP object |
 | `UnlockObject` | Release edit lock |
-| `CreateObject` | Create new ABAP object (program, class, interface, include, function group, function module) |
+| `CreateObject` | Create new ABAP object (program, class, interface, include, function group, function module, package) |
 | `UpdateSource` | Write source code to an object |
 | `DeleteObject` | Delete an ABAP object |
 
@@ -359,8 +359,8 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
   - [ ] DebuggerGetCallStack - Get call stack
   - [ ] DebuggerStartTrace - Start ABAP/SQL/profile trace
   - [ ] DebuggerGetTraceResults - Analyze trace data
-- [ ] **CDS Dependency Analysis** - Extract dependency tree for CDS views
-- [ ] **$ZRAY Local Implementation** - Execute framework code locally
+- [ ] **CDS Dependency Analysis** - Extract dependency tree for CDS views ([Investigation](reports/2025-12-02-016-cds-and-zray-endpoint-investigation.md) | [Plan](reports/2025-12-02-015-cds-dependency-and-zray-local-implementation.md))
+- [ ] **$ZRAY Local Implementation** - Execute framework code locally ([Investigation](reports/2025-12-02-016-cds-and-zray-endpoint-investigation.md) | [Plan](reports/2025-12-02-015-cds-dependency-and-zray-local-implementation.md))
 
 ### Planned Features
 - [ ] Transport Management (create, release, add objects)
