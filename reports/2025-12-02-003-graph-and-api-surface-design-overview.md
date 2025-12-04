@@ -18,7 +18,7 @@ This report outlines two major architectural initiatives to enhance ABAP code an
 1. **Improved Graph Architecture** - Clean, extensible redesign of ZRAY's graph traversal system
 2. **Standard API Surface Scraper** - Tool to discover and analyze SAP standard APIs used by custom code
 
-Both initiatives leverage insights from the ZRAY package analysis (Reports 001-002) and extend capabilities for both ABAP (ZRAY) and Go (mcp-adt-go) implementations.
+Both initiatives leverage insights from the ZRAY package analysis (Reports 001-002) and extend capabilities for both ABAP (ZRAY) and Go (vsp) implementations.
 
 ---
 
@@ -212,7 +212,7 @@ A comprehensive tool to discover, rank, cluster, and analyze SAP standard API us
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              mcp-adt-go: API Surface Tools                  │
+│              vsp: API Surface Tools                  │
 │   ScrapeAPISurface | RankAPIs | ClusterAPIs | GenerateReport│
 └─────────────────────────────────────────────────────────────┘
                               ↓
@@ -351,12 +351,12 @@ GenerateAPIReport   - Create comprehensive report
 **Usage Example:**
 ```bash
 # Full workflow
-mcp-adt-go ScrapeAPISurface \
+vsp ScrapeAPISurface \
   --package-patterns "Z*" \
   --include-types "F,ME,TY" \
-  | mcp-adt-go RankAPIs --rank-by usage \
-  | mcp-adt-go ClusterAPIs --cluster-by module \
-  | mcp-adt-go GenerateAPIReport --format html \
+  | vsp RankAPIs --rank-by usage \
+  | vsp ClusterAPIs --cluster-by module \
+  | vsp GenerateAPIReport --format html \
   > api-surface-report.html
 ```
 
@@ -447,7 +447,7 @@ mcp-adt-go ScrapeAPISurface \
 ### Phase 4: Integration (Weeks 7-8)
 **Graph Architecture:**
 - [ ] Update ZRAY to use new architecture
-- [ ] Add MCP tools to mcp-adt-go
+- [ ] Add MCP tools to vsp
 - [ ] Performance optimization
 - [ ] Documentation
 
@@ -489,7 +489,7 @@ mcp-adt-go ScrapeAPISurface \
 - **Storage:** SAP tables (ZLLM_00_NODE, ZLLM_00_EDGE)
 - **Testing:** ABAP Unit tests
 
-### Go Implementation (mcp-adt-go)
+### Go Implementation (vsp)
 - **Language:** Go 1.21+
 - **Framework:** mark3labs/mcp-go SDK
 - **Storage:** SQLite (local cache)
@@ -571,7 +571,7 @@ Both designs leverage insights from the ZRAY package analysis (Reports 001-002) 
 **Related Documents:**
 - `improved-graph-architecture-design.md` - Complete architectural design
 - `standard-api-surface-scraper.md` - Complete implementation design
-- `graph-traversal-implementation-plan.md` - Step-by-step plan for mcp-adt-go
+- `graph-traversal-implementation-plan.md` - Step-by-step plan for vsp
 - Report 001: ZRAY Auto Pilot Deep Dive
 - Report 002: CROSS & WBCROSSGT Reference Guide
 

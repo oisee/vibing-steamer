@@ -1,4 +1,4 @@
-# Test Intelligence System for mcp-adt-go
+# Test Intelligence System for vsp
 
 ## Overview
 

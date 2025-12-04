@@ -1,7 +1,7 @@
 
-![Vibing ABAP Developer](./media/vibing-steamer.png)
+![Vibing ABAP Developer](./media/vibing-steampunk.png)
 
-# mcp-adt-go
+# vsp
 
 A Go-native MCP (Model Context Protocol) server for SAP ABAP Development Tools (ADT).
 
@@ -27,7 +27,7 @@ This project stands on the shoulders of giants:
 | [abap-adt-api](https://github.com/marcellourbani/abap-adt-api) | Marcello Urbani | TypeScript library that implements the ADT REST API. Powers the [ABAP Remote FS](https://github.com/marcellourbani/vscode_abap_remote_fs) VS Code extension. The definitive reference for ADT API implementation. |
 | [mcp-abap-adt](https://github.com/mario-andreschak/mcp-abap-adt) | Mario Andreschak | First MCP server for ABAP ADT in TypeScript/Node.js. Pioneered the concept of AI-assisted ABAP development via MCP. |
 
-**mcp-adt-go** is a complete rewrite in Go, providing:
+**vsp** is a complete rewrite in Go, providing:
 - Single binary with zero runtime dependencies
 - Extended toolset (45 tools vs 13 in original)
 - Dual modes: 19 focused tools (AI-optimized) or 45 expert tools (complete)
@@ -38,7 +38,7 @@ This project stands on the shoulders of giants:
 
 Comparison of ADT capabilities across implementations:
 
-| Capability | ADT (Eclipse) | abap-adt-api (TS) | **mcp-adt-go** |
+| Capability | ADT (Eclipse) | abap-adt-api (TS) | **vsp** |
 |------------|:-------------:|:-----------------:|:--------------:|
 | **Source Read** |
 | Programs, Classes, Interfaces | Y | Y | **Y** |
@@ -104,7 +104,7 @@ This guide follows emerging best practices for MCP documentation aimed at AI age
 
 ## Focused vs Expert Modes
 
-**mcp-adt-go** offers two operational modes to optimize AI assistant performance:
+**vsp** offers two operational modes to optimize AI assistant performance:
 
 ### Focused Mode (Default) - 19 Tools
 
@@ -270,7 +270,7 @@ ImportFromFile(file_path="/path/to/zcl_ml_iris.clas.abap", package_name="$ZAML_I
 
 ### Pre-built Binaries
 
-Download from the [releases page](https://github.com/oisee/vibing-steamer/releases).
+Download from the [releases page](https://github.com/oisee/vibing-steampunk/releases).
 
 Available for:
 - Linux (amd64, arm64, 386, arm)
@@ -280,8 +280,8 @@ Available for:
 ### From Source
 
 ```bash
-git clone https://github.com/oisee/vibing-steamer.git
-cd vibing-steamer
+git clone https://github.com/oisee/vibing-steampunk.git
+cd vibing-steampunk
 
 # Build for current platform
 make build
@@ -297,10 +297,10 @@ The server supports multiple configuration methods with the following priority: 
 ### CLI Flags
 
 ```bash
-mcp-adt-go --url https://host:44300 --user admin --password secret
-mcp-adt-go --url https://host:44300 --cookie-string "sap-usercontext=..."
-mcp-adt-go --url https://host:44300 --cookie-file cookies.txt
-mcp-adt-go --help  # Show all options
+vsp --url https://host:44300 --user admin --password secret
+vsp --url https://host:44300 --cookie-string "sap-usercontext=..."
+vsp --url https://host:44300 --cookie-file cookies.txt
+vsp --help  # Show all options
 ```
 
 | Flag | Alias | Description |
@@ -351,16 +351,16 @@ The server supports two authentication methods (only one can be used at a time):
 
 1. **Basic Authentication** (username/password)
    ```bash
-   mcp-adt-go --url https://host:44300 --user admin --password secret
+   vsp --url https://host:44300 --user admin --password secret
    ```
 
 2. **Cookie Authentication** (session cookies)
    ```bash
    # From cookie string
-   mcp-adt-go --url https://host:44300 --cookie-string "sap-usercontext=abc; SAP_SESSIONID=xyz"
+   vsp --url https://host:44300 --cookie-string "sap-usercontext=abc; SAP_SESSIONID=xyz"
 
    # From Netscape-format cookie file
-   mcp-adt-go --url https://host:44300 --cookie-file cookies.txt
+   vsp --url https://host:44300 --cookie-file cookies.txt
    ```
 
 Cookie authentication is useful when you have an existing browser session or need to bypass SSO.
@@ -373,7 +373,7 @@ Add to your Claude Desktop configuration (`~/.config/claude/claude_desktop_confi
 {
   "mcpServers": {
     "abap-adt": {
-      "command": "/path/to/mcp-adt-go",
+      "command": "/path/to/vsp",
       "env": {
         "SAP_URL": "https://your-sap-host:44300",
         "SAP_USER": "your-username",
@@ -394,7 +394,7 @@ Add `.mcp.json` to your project root:
 {
   "mcpServers": {
     "abap-adt": {
-      "command": "/path/to/mcp-adt-go",
+      "command": "/path/to/vsp",
       "env": {
         "SAP_URL": "https://your-sap-host:44300",
         "SAP_USER": "your-username",
@@ -495,8 +495,8 @@ pkg/adt/
 ## Architecture
 
 ```
-vibing-steamer/
-├── cmd/mcp-adt-go/          # CLI entry point (cobra/viper)
+vibing-steampunk/
+├── cmd/vsp/          # CLI entry point (cobra/viper)
 │   └── main.go              # Config resolution, auth, server startup
 ├── pkg/adt/                 # ADT client library
 │   ├── client.go            # Main client facade + read operations

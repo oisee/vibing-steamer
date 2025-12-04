@@ -2,7 +2,7 @@
 
 **Date:** 2025-12-02
 **Report ID:** 011
-**Subject:** CRUD protection and safety configuration for mcp-adt-go
+**Subject:** CRUD protection and safety configuration for vsp
 **Related Documents:** Report 009 (Library Architecture), odata-mcp-go reference
 
 ---
@@ -46,7 +46,7 @@ pkg/adt/
 internal/mcp/
 └── server.go          # Safety config integration (MODIFIED)
 
-cmd/mcp-adt-go/
+cmd/vsp/
 └── main.go            # CLI flags + env vars (MODIFIED)
 
 Total: 2 new files, 7 modified files, ~530 new lines
@@ -140,10 +140,10 @@ safety := adt.UnrestrictedSafetyConfig()
 
 ```bash
 # Block all write operations
-mcp-adt-go --url http://host:50000 --user admin --password secret --read-only
+vsp --url http://host:50000 --user admin --password secret --read-only
 
 # Also block free SQL
-mcp-adt-go --url http://host:50000 --user admin --password secret \
+vsp --url http://host:50000 --user admin --password secret \
   --read-only --block-free-sql
 ```
 
@@ -160,7 +160,7 @@ export SAP_USER=admin
 export SAP_PASSWORD=secret
 export SAP_ALLOWED_PACKAGES="\$TMP,Z*"
 
-mcp-adt-go
+vsp
 ```
 
 **Result:**
@@ -170,7 +170,7 @@ mcp-adt-go
 ### Example 3: Programmatic Usage (Go Library)
 
 ```go
-import "github.com/oisee/vibing-steamer/pkg/adt"
+import "github.com/oisee/vibing-steampunk/pkg/adt"
 
 // Create client with custom safety config
 safety := adt.SafetyConfig{
@@ -286,9 +286,9 @@ client.Activate(ctx, objectURL, objectName)
 ### Verbose Output
 
 ```bash
-$ mcp-adt-go --verbose --read-only --block-free-sql --allowed-packages=\$TMP,Z*
+$ vsp --verbose --read-only --block-free-sql --allowed-packages=\$TMP,Z*
 
-[VERBOSE] Starting mcp-adt-go server
+[VERBOSE] Starting vsp server
 [VERBOSE] SAP URL: http://host:50000
 [VERBOSE] SAP Client: 001
 [VERBOSE] SAP Language: EN
@@ -445,7 +445,7 @@ No per-operation allocations (checks use value types only)
 - IsOperationEnabled() checking pattern
 - Environment variable support
 
-**Enhancements in mcp-adt-go:**
+**Enhancements in vsp:**
 - ✅ Package-based restrictions (not in odata-mcp-go)
 - ✅ Wildcard support for packages
 - ✅ Dual filtering (whitelist + blacklist)

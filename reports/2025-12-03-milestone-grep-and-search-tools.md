@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-This milestone adds powerful grep/search capabilities to mcp-adt-go, enabling AI agents to discover patterns in ABAP code before making surgical edits. Combined with the new case-insensitive matching in EditSource, this creates a complete "search → edit" workflow that dramatically improves efficiency and reduces token usage.
+This milestone adds powerful grep/search capabilities to vsp, enabling AI agents to discover patterns in ABAP code before making surgical edits. Combined with the new case-insensitive matching in EditSource, this creates a complete "search → edit" workflow that dramatically improves efficiency and reduces token usage.
 
 **Key Achievement:** AI agents can now work with ABAP code using familiar grep-like patterns, mirroring how they use local file tools (Grep → Edit).
 
@@ -461,7 +461,7 @@ This is a **milestone** in the truest sense - a significant step forward that en
 ---
 
 **Release:** v1.5.0
-**Release URL:** https://github.com/oisee/vibing-steamer/releases/tag/v1.5.0
+**Release URL:** https://github.com/oisee/vibing-steampunk/releases/tag/v1.5.0
 **Commit:** eeea7d9
 **Date:** 2025-12-03
 **Author:** Claude Code + Alice (human collaboration)

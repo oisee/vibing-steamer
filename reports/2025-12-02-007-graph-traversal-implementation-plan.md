@@ -1,7 +1,7 @@
 # Graph Traversal & Analysis Implementation Plan
 
 **Date:** 2025-12-02
-**Project:** mcp-adt-go
+**Project:** vsp
 **Goal:** Implement UP-DOWN graph traversal, clustering, and knowledge graph generation
 
 ---

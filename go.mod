@@ -1,4 +1,4 @@
-module github.com/oisee/vibing-steamer
+module github.com/oisee/vibing-steampunk
 
 go 1.23.0
 

@@ -1,8 +1,8 @@
-# mcp-adt-go Implementation Status
+# vsp Implementation Status
 
 **Date:** 2025-12-01
 **Project:** Go port of SAP ADT API as MCP server
-**Repository:** https://github.com/oisee/vibing-steamer
+**Repository:** https://github.com/oisee/vibing-steampunk
 
 ---
 
@@ -32,7 +32,7 @@
 
 ## 1. Source Code Read Operations
 
-| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **mcp-adt-go** | Notes |
+| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **vsp** | Notes |
 |------------|------------|-------------------|-------------------|---------------------|-------|
 | Get Program Source | Y | Y | Y | **Y** | `GetProgram` tool |
 | Get Class Source | Y | Y | Y | **Y** | `GetClass` tool |
@@ -55,7 +55,7 @@
 
 ## 2. Data Query Operations
 
-| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **mcp-adt-go** | Notes |
+| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **vsp** | Notes |
 |------------|------------|-------------------|-------------------|---------------------|-------|
 | Table Contents (basic) | Y | Y | P* | **Y** | `GetTableContents` tool |
 | Table Contents (filtered) | Y | Y | N | **Y** | `sql_query` parameter |
@@ -68,7 +68,7 @@
 
 ## 3. Development Tools
 
-| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **mcp-adt-go** | Notes |
+| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **vsp** | Notes |
 |------------|------------|-------------------|-------------------|---------------------|-------|
 | Syntax Check | Y | Y | N | **Y** | `SyntaxCheck` tool |
 | Activate Object | Y | Y | N | **Y** | `Activate` tool |
@@ -85,7 +85,7 @@
 
 ## 4. Object Navigation & Search
 
-| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **mcp-adt-go** | Notes |
+| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **vsp** | Notes |
 |------------|------------|-------------------|-------------------|---------------------|-------|
 | Quick Search | Y | Y | Y | **Y** | `SearchObject` tool |
 | Package Contents | Y | Y | Y | **Y** | `GetPackage` tool |
@@ -99,7 +99,7 @@
 
 ## 5. Source Code Write Operations (CRUD)
 
-| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **mcp-adt-go** | Notes |
+| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **vsp** | Notes |
 |------------|------------|-------------------|-------------------|---------------------|-------|
 | Lock Object | Y | Y | N | **Y** | `LockObject` tool |
 | Unlock Object | Y | Y | N | **Y** | `UnlockObject` tool |
@@ -117,7 +117,7 @@
 
 ## 6. Workflow Tools (High-Level Operations)
 
-| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **mcp-adt-go** | Notes |
+| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **vsp** | Notes |
 |------------|------------|-------------------|-------------------|---------------------|-------|
 | Write Program | - | - | N | **Y** | `WriteProgram` (Lock -> Check -> Update -> Unlock -> Activate) |
 | Write Class | - | - | N | **Y** | `WriteClass` (Lock -> Check -> Update -> Unlock -> Activate) |
@@ -130,7 +130,7 @@
 
 ## 7. Transport Management
 
-| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **mcp-adt-go** | Notes |
+| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **vsp** | Notes |
 |------------|------------|-------------------|-------------------|---------------------|-------|
 | Transport Info | Y | Y | N | N | Parked |
 | Create Transport | Y | Y | N | N | Parked |
@@ -143,7 +143,7 @@
 
 ## 8. Code Quality (ATC)
 
-| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **mcp-adt-go** | Notes |
+| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **vsp** | Notes |
 |------------|------------|-------------------|-------------------|---------------------|-------|
 | Create ATC Run | Y | Y | N | N | Future |
 | Get ATC Worklist | Y | Y | N | N | Future |
@@ -155,7 +155,7 @@
 
 ## 9. Session & Authentication
 
-| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **mcp-adt-go** | Notes |
+| Capability | ADT Native | abap-adt-api (TS) | mcp-abap-adt (TS) | **vsp** | Notes |
 |------------|------------|-------------------|-------------------|---------------------|-------|
 | Login (Basic Auth) | Y | Y | Y | **Y** | Built into transport |
 | CSRF Token | Y | Y | Y | **Y** | Auto-managed |
@@ -259,8 +259,8 @@
 ## Architecture
 
 ```
-mcp-adt-go/
-├── cmd/mcp-adt-go/
+vsp/
+├── cmd/vsp/
 │   └── main.go                 # Entry point
 ├── internal/mcp/
 │   └── server.go               # MCP server + handlers (36 tools)
@@ -286,8 +286,8 @@ See [ARCHITECTURE.md](../ARCHITECTURE.md) for detailed architecture documentatio
 
 ```
 $ go test ./...
-ok  	github.com/oisee/vibing-steamer/internal/mcp	0.010s
-ok  	github.com/oisee/vibing-steamer/pkg/adt	    0.013s
+ok  	github.com/oisee/vibing-steampunk/internal/mcp	0.010s
+ok  	github.com/oisee/vibing-steampunk/pkg/adt	    0.013s
 
 $ go test -tags=integration ./pkg/adt/
 PASS (24 integration tests against real SAP system)
@@ -325,7 +325,7 @@ Integration tests include:
 
 ## Comparison: Go vs TypeScript MCP
 
-| Aspect | mcp-abap-adt (TS) | mcp-adt-go |
+| Aspect | mcp-abap-adt (TS) | vsp |
 |--------|-------------------|-----------------|
 | Tools | 13 | 36 |
 | SQL Query | No | Yes |

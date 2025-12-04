@@ -257,7 +257,7 @@ package main
 import (
     "context"
     "fmt"
-    "github.com/oisee/vibing-steamer/pkg/cache"
+    "github.com/oisee/vibing-steampunk/pkg/cache"
 )
 
 func main() {

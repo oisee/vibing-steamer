@@ -805,7 +805,7 @@ Object type: PROG/P (program), CLAS/OC (class), INTF/OI (interface),
 ## 9. Files Modified
 
 ```
-cmd/mcp-adt-go/main.go      | 51 +++++++++++++++++++
+cmd/vsp/main.go      | 51 +++++++++++++++++++
 internal/mcp/server.go      | 28 +++++++++-
 pkg/adt/client.go           | 24 +++++++++
 pkg/adt/crud.go             | 79 ++++++++++++++++++++++++++++

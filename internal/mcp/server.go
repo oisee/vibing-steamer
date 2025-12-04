@@ -9,7 +9,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"github.com/oisee/vibing-steamer/pkg/adt"
+	"github.com/oisee/vibing-steampunk/pkg/adt"
 )
 
 // Server wraps the MCP server with ADT client.

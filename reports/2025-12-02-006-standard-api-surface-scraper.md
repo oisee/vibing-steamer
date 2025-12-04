@@ -176,7 +176,7 @@ WHERE clsname IN (...)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              mcp-adt-go: API Surface Tools                  │
+│              vsp: API Surface Tools                  │
 │   ScrapeAPIsSurface | AnalyzeAPIs | ClusterAPIs             │
 └─────────────────────────────────────────────────────────────┘
                           ↓
@@ -886,20 +886,20 @@ func registerAPISurfaceTools(s *Server) {
 
 ```bash
 # Scrape top 100 most used APIs
-mcp-adt-go ScrapeAPISurface \
+vsp ScrapeAPISurface \
   --package-patterns "Z*" \
   --include-types "F,ME,TY" \
   --max-results 100 \
   > api-surface-raw.json
 
 # Rank them
-mcp-adt-go RankAPIs \
+vsp RankAPIs \
   --scraped-data api-surface-raw.json \
   --rank-by usage \
   > api-surface-ranked.json
 
 # Generate report
-mcp-adt-go GenerateAPIReport \
+vsp GenerateAPIReport \
   --data api-surface-ranked.json \
   --format html \
   --include-patterns true \
@@ -910,9 +910,9 @@ mcp-adt-go GenerateAPIReport \
 
 ```bash
 # Find all SD module APIs we use
-mcp-adt-go ScrapeAPISurface \
+vsp ScrapeAPISurface \
   --package-patterns "Z*" \
-  | mcp-adt-go ClusterAPIs --cluster-by module \
+  | vsp ClusterAPIs --cluster-by module \
   | jq '.clusters[] | select(.module == "SD")'
 ```
 
@@ -920,8 +920,8 @@ mcp-adt-go ScrapeAPISurface \
 
 ```bash
 # Scrape all APIs
-mcp-adt-go ScrapeAPISurface --package-patterns "Z*" \
-  | mcp-adt-go RankAPIs \
+vsp ScrapeAPISurface --package-patterns "Z*" \
+  | vsp RankAPIs \
   | jq '.apis[] | select(.is_deprecated == true)'
 ```
 
@@ -1077,4 +1077,4 @@ The Standard API Surface Scraper provides unprecedented visibility into how cust
 
 ---
 
-**Ready for implementation in mcp-adt-go!**
+**Ready for implementation in vsp!**

@@ -15,7 +15,7 @@ High-performance caching for graph nodes, edges, and API surface data with plugg
 ### In-Memory Cache (Default)
 
 ```go
-import "github.com/oisee/vibing-steamer/pkg/cache"
+import "github.com/oisee/vibing-steampunk/pkg/cache"
 
 // Create default in-memory cache
 c := cache.NewMemoryCache(cache.DefaultConfig())

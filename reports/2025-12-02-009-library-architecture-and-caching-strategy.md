@@ -154,7 +154,7 @@ pkg/
     └── invalidation.go   # Invalidation strategies
 
 cmd/
-├── mcp-adt-go/           # MCP Server (existing)
+├── vsp/           # MCP Server (existing)
 │   └── main.go
 │
 ├── adt-cli/              # New: Standalone CLI tool
@@ -189,8 +189,8 @@ package main
 
 import (
     "context"
-    "github.com/oisee/vibing-steamer/pkg/apisurface"
-    "github.com/oisee/vibing-steamer/pkg/adt"
+    "github.com/oisee/vibing-steampunk/pkg/apisurface"
+    "github.com/oisee/vibing-steampunk/pkg/adt"
 )
 
 func main() {

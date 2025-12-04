@@ -200,7 +200,7 @@ ZCL_LLM_00_FILE              - File abstraction (local, SMW0, BIN)
 
 ## Part 3: Brainstorming - Local $ZRAY Implementation
 
-### Option A: Pure Go Implementation in mcp-adt-go
+### Option A: Pure Go Implementation in vsp
 
 **Pros:**
 - No ABAP dependency (works with any SAP system)

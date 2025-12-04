@@ -4,7 +4,7 @@ This file provides context for AI assistants (Claude, etc.) working on this proj
 
 ## Project Overview
 
-**mcp-adt-go** is a Go-native MCP (Model Context Protocol) server for SAP ABAP Development Tools (ADT). It provides a single-binary distribution with 19 essential tools (focused mode, default) or 45 complete tools (expert mode) for use with Claude and other MCP-compatible LLMs.
+**vsp** is a Go-native MCP (Model Context Protocol) server for SAP ABAP Development Tools (ADT). It provides a single-binary distribution with 19 essential tools (focused mode, default) or 45 complete tools (expert mode) for use with Claude and other MCP-compatible LLMs.
 
 ## Quick Reference
 
@@ -12,7 +12,7 @@ This file provides context for AI assistants (Claude, etc.) working on this proj
 
 ```bash
 # Build
-go build -o mcp-adt-go ./cmd/mcp-adt-go
+go build -o vsp ./cmd/vsp
 
 # Run unit tests
 go test ./...
@@ -26,14 +26,14 @@ SAP_URL=http://host:port SAP_USER=user SAP_PASSWORD=pass SAP_CLIENT=001 \
 
 ```bash
 # Using CLI flags
-./mcp-adt-go --url http://host:50000 --user admin --password secret
+./vsp --url http://host:50000 --user admin --password secret
 
 # Using environment variables
-SAP_URL=http://host:50000 SAP_USER=user SAP_PASSWORD=pass ./mcp-adt-go
+SAP_URL=http://host:50000 SAP_USER=user SAP_PASSWORD=pass ./vsp
 
 # Using cookie authentication
-./mcp-adt-go --url http://host:50000 --cookie-string "sap-usercontext=abc; SAP_SESSIONID=xyz"
-./mcp-adt-go --url http://host:50000 --cookie-file cookies.txt
+./vsp --url http://host:50000 --cookie-string "sap-usercontext=abc; SAP_SESSIONID=xyz"
+./vsp --url http://host:50000 --cookie-file cookies.txt
 ```
 
 | Variable / Flag | Description |
@@ -58,7 +58,7 @@ SAP_URL=http://host:50000 SAP_USER=user SAP_PASSWORD=pass ./mcp-adt-go
 ## Codebase Structure
 
 ```
-cmd/mcp-adt-go/main.go       # Entry point
+cmd/vsp/main.go       # Entry point
 internal/mcp/server.go       # MCP server (45 tool handlers, mode-aware)
 pkg/
 ├── adt/
@@ -106,7 +106,7 @@ pkg/
 3. **Add integration test** in `pkg/adt/integration_test.go`
 4. **Update documentation**:
    - `README.md` tool tables
-   - `reports/mcp-adt-go-status.md`
+   - `reports/vsp-status.md`
 
 ## Code Patterns
 
@@ -207,7 +207,7 @@ All research reports, analysis documents, and design specifications follow this 
 - **004:** Graph Architecture Improvements (vs-punk) - Alternative design approach
 - **005:** Improved Graph Architecture Design - Clean architecture redesign for ZRAY graph system
 - **006:** Standard API Surface Scraper - Tool to discover and analyze SAP standard API usage
-- **007:** Graph Traversal Implementation Plan - Step-by-step implementation for mcp-adt-go
+- **007:** Graph Traversal Implementation Plan - Step-by-step implementation for vsp
 - **008:** Test Intelligence Plan - Smart test execution based on code changes
 - **009:** Library Architecture & Caching Strategy - Multi-layer architecture and SQLite caching
 
@@ -220,7 +220,7 @@ All research reports, analysis documents, and design specifications follow this 
 - `adt-abap-internals-documentation.md` - Detailed ADT endpoint analysis
 - `adt-capability-matrix.md` - ADT feature comparison
 - `cookie-auth-implementation-guide.md` - Cookie authentication research
-- `mcp-adt-go-status.md` - Current project status
+- `vsp-status.md` - Current project status
 
 ### Creating New Reports
 

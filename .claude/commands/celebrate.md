@@ -29,7 +29,7 @@ git log --all -p | grep -E "password|PASSWORD|secret|SECRET" | head -5 || echo "
 If needed, update:
 - README.md - version references, feature list
 - CLAUDE.md - project status metrics
-- reports/mcp-adt-go-status.md - if exists
+- reports/vsp-status.md - if exists
 
 ## 4. Commit & Push
 
@@ -66,15 +66,15 @@ Use `gh release create` with:
 
 ```bash
 gh release create vX.Y.Z \
-  build/mcp-adt-go-linux-amd64 \
-  build/mcp-adt-go-linux-arm64 \
-  build/mcp-adt-go-linux-386 \
-  build/mcp-adt-go-linux-arm \
-  build/mcp-adt-go-darwin-amd64 \
-  build/mcp-adt-go-darwin-arm64 \
-  build/mcp-adt-go-windows-amd64.exe \
-  build/mcp-adt-go-windows-arm64.exe \
-  build/mcp-adt-go-windows-386.exe \
+  build/vsp-linux-amd64 \
+  build/vsp-linux-arm64 \
+  build/vsp-linux-386 \
+  build/vsp-linux-arm \
+  build/vsp-darwin-amd64 \
+  build/vsp-darwin-arm64 \
+  build/vsp-windows-amd64.exe \
+  build/vsp-windows-arm64.exe \
+  build/vsp-windows-386.exe \
   --title "vX.Y.Z: <title>" \
   --notes "$(cat <<'NOTES'
 ## What's New
@@ -86,11 +86,11 @@ gh release create vX.Y.Z \
 
 | Platform | Architecture | File |
 |----------|--------------|------|
-| Linux | x64 | mcp-adt-go-linux-amd64 |
-| Linux | ARM64 | mcp-adt-go-linux-arm64 |
-| macOS | x64 | mcp-adt-go-darwin-amd64 |
-| macOS | Apple Silicon | mcp-adt-go-darwin-arm64 |
-| Windows | x64 | mcp-adt-go-windows-amd64.exe |
+| Linux | x64 | vsp-linux-amd64 |
+| Linux | ARM64 | vsp-linux-arm64 |
+| macOS | x64 | vsp-darwin-amd64 |
+| macOS | Apple Silicon | vsp-darwin-arm64 |
+| Windows | x64 | vsp-windows-amd64.exe |
 
 ## Installation
 

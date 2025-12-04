@@ -1,4 +1,4 @@
-# mcp-adt-go Architecture
+# vsp Architecture
 
 This document describes the architecture of the Go-native MCP server for SAP ADT.
 
@@ -83,8 +83,8 @@ This document describes the architecture of the Go-native MCP server for SAP ADT
 ## Directory Structure
 
 ```
-vibing-steamer/
-├── cmd/mcp-adt-go/
+vibing-steampunk/
+├── cmd/vsp/
 │   └── main.go                  # CLI entry point (cobra/viper), auth handling
 │
 ├── internal/mcp/
@@ -109,7 +109,7 @@ vibing-steamer/
 │   └── integration_test.go      # Integration tests (requires SAP system)
 │
 ├── reports/                     # Project documentation and research
-│   ├── mcp-adt-go-status.md     # Implementation status
+│   ├── vsp-status.md     # Implementation status
 │   ├── cookie-auth-implementation-guide.md  # Cookie auth research
 │   └── *.md                     # Discovery and analysis documents
 │
@@ -120,7 +120,7 @@ vibing-steamer/
 
 ## Component Details
 
-### cmd/mcp-adt-go/main.go
+### cmd/vsp/main.go
 
 Entry point for the MCP server with full CLI support:
 - **cobra** for command-line argument parsing

@@ -1,7 +1,7 @@
 # Cookie Authentication Implementation Guide
 
 **Based on:** odata_mcp_go implementation
-**Target:** mcp-adt-go
+**Target:** vsp
 **Date:** 2025-12-02
 
 ---
@@ -19,9 +19,9 @@ This is useful for:
 
 ---
 
-## Current Authentication in mcp-adt-go
+## Current Authentication in vsp
 
-Currently, `mcp-adt-go` only supports basic authentication via environment variables:
+Currently, `vsp` only supports basic authentication via environment variables:
 
 ```go
 // pkg/adt/config.go
@@ -229,7 +229,7 @@ func processAuthentication(cfg *config.Config) error {
 
 ---
 
-## Implementation Plan for mcp-adt-go
+## Implementation Plan for vsp
 
 ### Phase 1: Configuration Changes
 
@@ -338,7 +338,7 @@ func (t *Transport) Request(ctx context.Context, method, path string, body io.Re
 
 ### Phase 4: Environment Variables
 
-**File:** `cmd/mcp-adt-go/main.go`
+**File:** `cmd/vsp/main.go`
 
 Add new environment variables:
 - `SAP_COOKIE_FILE` - Path to cookie file
@@ -405,11 +405,11 @@ cat > cookies.txt << 'EOF'
 .sap-system.com    TRUE    /    FALSE    0    SAP_SESSIONID    xyz789
 EOF
 
-# Use with mcp-adt-go
+# Use with vsp
 SAP_URL=https://sap-system.com:44300 \
 SAP_COOKIE_FILE=cookies.txt \
 SAP_CLIENT=001 \
-./mcp-adt-go
+./vsp
 ```
 
 ### Cookie String Authentication
@@ -418,7 +418,7 @@ SAP_CLIENT=001 \
 SAP_URL=https://sap-system.com:44300 \
 SAP_COOKIE_STRING="sap-usercontext=abc123; SAP_SESSIONID=xyz789" \
 SAP_CLIENT=001 \
-./mcp-adt-go
+./vsp
 ```
 
 ### Claude Desktop Config with Cookies
@@ -427,7 +427,7 @@ SAP_CLIENT=001 \
 {
   "mcpServers": {
     "abap-adt": {
-      "command": "/path/to/mcp-adt-go",
+      "command": "/path/to/vsp",
       "env": {
         "SAP_URL": "https://sap-system.com:44300",
         "SAP_COOKIE_STRING": "sap-usercontext=abc123; SAP_SESSIONID=xyz789",
@@ -524,7 +524,7 @@ Test against SAP system with cookies exported from browser:
 | `pkg/adt/config.go` | Add CookieFile, CookieString, Cookies fields and helper methods |
 | `pkg/adt/cookies.go` | New file with cookie parsing functions |
 | `pkg/adt/http.go` | Add cookie support to Transport |
-| `cmd/mcp-adt-go/main.go` | Add SAP_COOKIE_FILE and SAP_COOKIE_STRING env vars |
+| `cmd/vsp/main.go` | Add SAP_COOKIE_FILE and SAP_COOKIE_STRING env vars |
 | `internal/mcp/server.go` | Pass cookies through to ADT client |
 | `README.md` | Document cookie authentication |
 | `CLAUDE.md` | Update with cookie auth info |

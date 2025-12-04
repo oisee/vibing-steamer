@@ -369,4 +369,4 @@ For each class:
 
 **Last Updated:** 2025-12-03
 **MCP Server Version:** 1.5.0+
-**Maintained by:** vibing-steamer project
+**Maintained by:** vibing-steampunk project

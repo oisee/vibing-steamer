@@ -1,7 +1,7 @@
-# mcp-adt-go Makefile
+# vsp Makefile
 
 # Binary name
-BINARY_NAME=mcp-adt-go
+BINARY_NAME=vsp
 
 # Go parameters
 GOCMD=go
@@ -15,7 +15,7 @@ GOLINT=golangci-lint
 
 # Build directories
 BUILD_DIR=build
-CMD_DIR=./cmd/mcp-adt-go
+CMD_DIR=./cmd/vsp
 
 # Version info
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")

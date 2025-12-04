@@ -641,7 +641,7 @@ func (c *Client) DeployFromDirectory(ctx context.Context, dirPath, packageName, 
 ```bash
 # .git/hooks/pre-commit
 #!/bin/bash
-mcp-adt-go deploy --check-syntax abap/*.abap
+vsp deploy --check-syntax abap/*.abap
 ```
 
 ---

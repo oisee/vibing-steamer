@@ -407,7 +407,7 @@ Returns: Recursive dependency tree (JSON)
 ### Phase 2: Mode Implementation (1-2 days)
 
 **Files to modify:**
-- `cmd/mcp-adt-go/main.go` - add `--mode` CLI flag
+- `cmd/vsp/main.go` - add `--mode` CLI flag
 - `pkg/adt/config.go` - add `Mode` field
 - `internal/mcp/server.go` - add mode-based tool filtering
 
@@ -581,7 +581,7 @@ Returns: Recursive dependency tree (JSON)
 - `internal/mcp/server.go` - tool registration, mode filtering
 - `pkg/adt/workflows.go` - WriteSource, QueryData
 - `pkg/adt/client.go` - GetSource
-- `cmd/mcp-adt-go/main.go` - CLI flags
+- `cmd/vsp/main.go` - CLI flags
 - `pkg/adt/config.go` - Mode configuration
 - `README.md` - documentation
 - `MCP_USAGE.md` - AI agent usage guide
