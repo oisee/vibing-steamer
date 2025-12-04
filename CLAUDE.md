@@ -4,7 +4,7 @@ This file provides context for AI assistants (Claude, etc.) working on this proj
 
 ## Project Overview
 
-**mcp-adt-go** is a Go-native MCP (Model Context Protocol) server for SAP ABAP Development Tools (ADT). It provides a single-binary distribution of 43 ADT tools for use with Claude and other MCP-compatible LLMs.
+**mcp-adt-go** is a Go-native MCP (Model Context Protocol) server for SAP ABAP Development Tools (ADT). It provides a single-binary distribution with 19 essential tools (focused mode, default) or 45 complete tools (expert mode) for use with Claude and other MCP-compatible LLMs.
 
 ## Quick Reference
 
@@ -46,6 +46,7 @@ SAP_URL=http://host:50000 SAP_USER=user SAP_PASSWORD=pass ./mcp-adt-go
 | `SAP_INSECURE` / `--insecure` | Skip TLS verification (default: false) |
 | `SAP_COOKIE_FILE` / `--cookie-file` | Path to Netscape-format cookie file |
 | `SAP_COOKIE_STRING` / `--cookie-string` | Cookie string (key1=val1; key2=val2) |
+| `SAP_MODE` / `--mode` | Tool mode: `focused` (19 tools, default) or `expert` (45 tools) |
 | `SAP_VERBOSE` / `--verbose` | Enable verbose logging to stderr |
 | **Safety Configuration** | |
 | `SAP_READ_ONLY` / `--read-only` | Block all write operations (default: false) |
@@ -58,7 +59,7 @@ SAP_URL=http://host:50000 SAP_USER=user SAP_PASSWORD=pass ./mcp-adt-go
 
 ```
 cmd/mcp-adt-go/main.go       # Entry point
-internal/mcp/server.go       # MCP server (43 tool handlers)
+internal/mcp/server.go       # MCP server (45 tool handlers, mode-aware)
 pkg/
 ├── adt/
 │   ├── client.go             # ADT client + read operations

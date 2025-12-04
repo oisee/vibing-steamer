@@ -118,8 +118,8 @@ func (s *Server) registerTools(mode string) {
 		"WriteSource": true,
 
 		// Search tools (3) - foundation
-		"GrepObject":   true,
-		"GrepPackage":  true,
+		"GrepObjects":  true, // Multi-object search (replaces GrepObject)
+		"GrepPackages": true, // Multi-package + recursive (replaces GrepPackage)
 		"SearchObject": true,
 
 		// Primary workflow (1)
@@ -145,9 +145,9 @@ func (s *Server) registerTools(mode string) {
 		"LockObject":   true,
 		"UnlockObject": true,
 
-		// File-based deployment (2)
-		"DeployFromFile": true,
-		"SaveToFile":     true,
+		// File-based operations (2)
+		"ImportFromFile": true, // File → SAP (replaces DeployFromFile)
+		"ExportToFile":   true, // SAP → File (replaces SaveToFile)
 	}
 
 	// Helper to check if tool should be registered
@@ -730,6 +730,16 @@ func (s *Server) registerTools(mode string) {
 	), s.handleSaveToFile)
 	}
 
+	// ImportFromFile (alias for DeployFromFile - File → SAP)
+	if shouldRegister("ImportFromFile") {
+		s.registerImportFromFile()
+	}
+
+	// ExportToFile (alias for SaveToFile - SAP → File)
+	if shouldRegister("ExportToFile") {
+		s.registerExportToFile()
+	}
+
 
 	// RenameObject
 	if shouldRegister("RenameObject") {
@@ -835,6 +845,16 @@ func (s *Server) registerTools(mode string) {
 			mcp.Description("Maximum number of matching objects to return. 0 = unlimited. Default: 100"),
 		),
 	), s.handleGrepPackage)
+	}
+
+	// GrepObjects (unified multi-object search)
+	if shouldRegister("GrepObjects") {
+		s.registerGrepObjects()
+	}
+
+	// GrepPackages (unified multi-package search with recursive subpackages)
+	if shouldRegister("GrepPackages") {
+		s.registerGrepPackages()
 	}
 
 
@@ -2210,6 +2230,193 @@ func (s *Server) handleWriteSource(ctx context.Context, request mcp.CallToolRequ
 	result, err := s.adtClient.WriteSource(ctx, objectType, name, source, opts)
 	if err != nil {
 		return newToolResultError(fmt.Sprintf("WriteSource failed: %v", err)), nil
+	}
+
+	output, _ := json.MarshalIndent(result, "", "  ")
+	return mcp.NewToolResultText(string(output)), nil
+}
+
+// registerGrepObjects registers the unified GrepObjects tool
+func (s *Server) registerGrepObjects() {
+	s.mcpServer.AddTool(mcp.NewTool("GrepObjects",
+		mcp.WithDescription("Unified tool for searching regex patterns in single or multiple ABAP objects. Replaces GrepObject."),
+		mcp.WithArray("object_urls",
+			mcp.Required(),
+			mcp.Description("Array of ADT object URLs to search (e.g., [\"/sap/bc/adt/programs/programs/ZTEST\"])"),
+			mcp.Items(map[string]interface{}{"type": "string"}),
+		),
+		mcp.WithString("pattern",
+			mcp.Required(),
+			mcp.Description("Regular expression pattern (Go regexp syntax)"),
+		),
+		mcp.WithBoolean("case_insensitive",
+			mcp.Description("If true, perform case-insensitive matching (default: false)"),
+		),
+		mcp.WithNumber("context_lines",
+			mcp.Description("Number of context lines before/after each match (default: 0)"),
+		),
+	), s.handleGrepObjects)
+}
+
+// registerGrepPackages registers the unified GrepPackages tool
+func (s *Server) registerGrepPackages() {
+	s.mcpServer.AddTool(mcp.NewTool("GrepPackages",
+		mcp.WithDescription("Unified tool for searching regex patterns across single or multiple packages with optional recursive subpackage search. Replaces GrepPackage."),
+		mcp.WithArray("packages",
+			mcp.Required(),
+			mcp.Description("Array of package names to search (e.g., [\"$TMP\"], [\"Z\"] for namespace search)"),
+			mcp.Items(map[string]interface{}{"type": "string"}),
+		),
+		mcp.WithBoolean("include_subpackages",
+			mcp.Description("If true, recursively search all subpackages (default: false). Enables namespace-wide searches."),
+		),
+		mcp.WithString("pattern",
+			mcp.Required(),
+			mcp.Description("Regular expression pattern (Go regexp syntax)"),
+		),
+		mcp.WithBoolean("case_insensitive",
+			mcp.Description("If true, perform case-insensitive matching (default: false)"),
+		),
+		mcp.WithArray("object_types",
+			mcp.Description("Filter by object types (e.g., [\"CLAS/OC\", \"PROG/P\"]). Empty = search all types."),
+			mcp.Items(map[string]interface{}{"type": "string"}),
+		),
+		mcp.WithNumber("max_results",
+			mcp.Description("Maximum number of matching objects to return (0 = unlimited, default: 0)"),
+		),
+	), s.handleGrepPackages)
+}
+
+// registerImportFromFile registers the ImportFromFile tool (alias for DeployFromFile)
+func (s *Server) registerImportFromFile() {
+	s.mcpServer.AddTool(mcp.NewTool("ImportFromFile",
+		mcp.WithDescription("Import ABAP object from local file into SAP system. Auto-detects object type, creates or updates, activates. Supports: programs, classes, interfaces, function groups/modules. Renamed from DeployFromFile for clarity."),
+		mcp.WithString("file_path",
+			mcp.Required(),
+			mcp.Description("Absolute path to ABAP source file (.prog.abap, .clas.abap, .intf.abap, .fugr.abap, .func.abap)"),
+		),
+		mcp.WithString("package_name",
+			mcp.Description("Target package name (required for new objects)"),
+		),
+		mcp.WithString("transport",
+			mcp.Description("Transport request number"),
+		),
+	), s.handleDeployFromFile) // Reuse existing handler
+}
+
+// registerExportToFile registers the ExportToFile tool (alias for SaveToFile)
+func (s *Server) registerExportToFile() {
+	s.mcpServer.AddTool(mcp.NewTool("ExportToFile",
+		mcp.WithDescription("Export ABAP object from SAP system to local file. Saves source code with appropriate file extension. Supports: programs, classes, interfaces, function groups/modules. Renamed from SaveToFile for clarity."),
+		mcp.WithString("object_type",
+			mcp.Required(),
+			mcp.Description("Object type: PROG, CLAS, INTF, FUGR, FUNC"),
+		),
+		mcp.WithString("object_name",
+			mcp.Required(),
+			mcp.Description("Object name"),
+		),
+		mcp.WithString("output_dir",
+			mcp.Required(),
+			mcp.Description("Output directory path (must exist)"),
+		),
+		mcp.WithString("parent",
+			mcp.Description("Function group name (required for FUNC type)"),
+		),
+	), s.handleSaveToFile) // Reuse existing handler
+}
+
+// handleGrepObjects handles the unified GrepObjects tool call
+func (s *Server) handleGrepObjects(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	objectURLsRaw, ok := request.Params.Arguments["object_urls"].([]interface{})
+	if !ok || len(objectURLsRaw) == 0 {
+		return newToolResultError("object_urls array is required"), nil
+	}
+
+	// Convert []interface{} to []string
+	objectURLs := make([]string, len(objectURLsRaw))
+	for i, v := range objectURLsRaw {
+		if s, ok := v.(string); ok {
+			objectURLs[i] = s
+		} else {
+			return newToolResultError(fmt.Sprintf("object_urls[%d] must be a string", i)), nil
+		}
+	}
+
+	pattern, ok := request.Params.Arguments["pattern"].(string)
+	if !ok || pattern == "" {
+		return newToolResultError("pattern is required"), nil
+	}
+
+	caseInsensitive := false
+	if ci, ok := request.Params.Arguments["case_insensitive"].(bool); ok {
+		caseInsensitive = ci
+	}
+
+	contextLines := 0
+	if cl, ok := request.Params.Arguments["context_lines"].(float64); ok {
+		contextLines = int(cl)
+	}
+
+	result, err := s.adtClient.GrepObjects(ctx, objectURLs, pattern, caseInsensitive, contextLines)
+	if err != nil {
+		return newToolResultError(fmt.Sprintf("GrepObjects failed: %v", err)), nil
+	}
+
+	output, _ := json.MarshalIndent(result, "", "  ")
+	return mcp.NewToolResultText(string(output)), nil
+}
+
+// handleGrepPackages handles the unified GrepPackages tool call
+func (s *Server) handleGrepPackages(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	packagesRaw, ok := request.Params.Arguments["packages"].([]interface{})
+	if !ok || len(packagesRaw) == 0 {
+		return newToolResultError("packages array is required"), nil
+	}
+
+	// Convert []interface{} to []string
+	packages := make([]string, len(packagesRaw))
+	for i, v := range packagesRaw {
+		if s, ok := v.(string); ok {
+			packages[i] = s
+		} else {
+			return newToolResultError(fmt.Sprintf("packages[%d] must be a string", i)), nil
+		}
+	}
+
+	includeSubpackages := false
+	if is, ok := request.Params.Arguments["include_subpackages"].(bool); ok {
+		includeSubpackages = is
+	}
+
+	pattern, ok := request.Params.Arguments["pattern"].(string)
+	if !ok || pattern == "" {
+		return newToolResultError("pattern is required"), nil
+	}
+
+	caseInsensitive := false
+	if ci, ok := request.Params.Arguments["case_insensitive"].(bool); ok {
+		caseInsensitive = ci
+	}
+
+	var objectTypes []string
+	if ot, ok := request.Params.Arguments["object_types"].([]interface{}); ok {
+		objectTypes = make([]string, len(ot))
+		for i, v := range ot {
+			if s, ok := v.(string); ok {
+				objectTypes[i] = s
+			}
+		}
+	}
+
+	maxResults := 0
+	if mr, ok := request.Params.Arguments["max_results"].(float64); ok {
+		maxResults = int(mr)
+	}
+
+	result, err := s.adtClient.GrepPackages(ctx, packages, includeSubpackages, pattern, caseInsensitive, objectTypes, maxResults)
+	if err != nil {
+		return newToolResultError(fmt.Sprintf("GrepPackages failed: %v", err)), nil
 	}
 
 	output, _ := json.MarshalIndent(result, "", "  ")

@@ -14,15 +14,21 @@ This document describes the architecture of the Go-native MCP server for SAP ADT
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                        internal/mcp/server.go                          │
-│                         (36 Tool Handlers)                              │
-│  ┌────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────────────┐   │
-│  │ Read Ops   │ │ CRUD Ops   │ │ Dev Tools  │ │ Code Intelligence  │   │
-│  │ (14 tools) │ │ (8 tools)  │ │ (3 tools)  │ │ (7 tools)          │   │
-│  └────────────┘ └────────────┘ └────────────┘ └────────────────────┘   │
-│                          ┌────────────────┐                             │
-│                          │ Workflow Tools │                             │
-│                          │ (4 tools)      │                             │
-│                          └────────────────┘                             │
+│                Mode-Aware Tool Registration (45 total)                 │
+│      ┌─────────────────────────────────────────────────────┐           │
+│      │ Focused Mode (19 tools) - AI-Optimized              │           │
+│      │ • Unified: GetSource, WriteSource                    │           │
+│      │ • Enhanced Search: GrepObjects, GrepPackages         │           │
+│      │ • File Ops: ImportFromFile, ExportToFile             │           │
+│      │ • Core: EditSource, SearchObject, FindDef/Refs       │           │
+│      │ • Data: GetTable, GetTableContents, RunQuery, CDS    │           │
+│      │ • Dev: SyntaxCheck, RunUnitTests                     │           │
+│      │ • Advanced: Lock/Unlock, GetPackage, GetFunctionGrp │           │
+│      └─────────────────────────────────────────────────────┘           │
+│      ┌─────────────────────────────────────────────────────┐           │
+│      │ Expert Mode (45 tools) - Complete + Legacy          │           │
+│      │ All focused tools + atomic operations + granular I/O│           │
+│      └─────────────────────────────────────────────────────┘           │
 └─────────────────────────────────────────────────────────────────────────┘
                                     │
                             pkg/adt.Client
@@ -50,9 +56,13 @@ This document describes the architecture of the Go-native MCP server for SAP ADT
 │  └────────────────┘ │ • WriteClass   │                                  │
 │                     │ • CreateAndAct.│  ┌────────────────┐             │
 │                     │ • CreateClass..│  │ config.go      │             │
-│                     └────────────────┘  │ • FromEnv()    │             │
-│                                         │ • Options      │             │
-│  ┌──────────────────────────────────┐  └────────────────┘             │
+│                     │ • GetSource    │  │ • FromEnv()    │             │
+│                     │ • WriteSource  │  │ • Options      │             │
+│                     │ • GrepObjects  │  │ • Mode         │             │
+│                     │ • GrepPackages │  └────────────────┘             │
+│                     └────────────────┘                                  │
+│                                                                         │
+│  ┌──────────────────────────────────┐                                  │
 │  │ http.go - HTTP Transport         │                                  │
 │  │   • CSRF token management        │  ┌────────────────┐             │
 │  │   • Session cookies              │  │ xml.go         │             │
@@ -78,7 +88,7 @@ vibing-steamer/
 │   └── main.go                  # CLI entry point (cobra/viper), auth handling
 │
 ├── internal/mcp/
-│   ├── server.go                # MCP server implementation (36 tool handlers)
+│   ├── server.go                # MCP server implementation (45 tool handlers, mode-aware)
 │   └── server_test.go           # Server unit tests
 │
 ├── pkg/adt/
@@ -123,7 +133,7 @@ Entry point for the MCP server with full CLI support:
 ### internal/mcp/server.go
 
 MCP protocol implementation:
-- Registers 36 tools with the MCP SDK
+- Registers 19 tools (focused mode, default) or 45 tools (expert mode) with the MCP SDK
 - Maps tool calls to ADT client methods
 - Handles JSON-RPC communication
 

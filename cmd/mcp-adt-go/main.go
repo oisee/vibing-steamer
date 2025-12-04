@@ -28,7 +28,7 @@ var rootCmd = &cobra.Command{
 	Long: `mcp-adt-go is a Model Context Protocol (MCP) server that provides
 ABAP Development Tools (ADT) functionality for AI assistants like Claude.
 
-It exposes 36 tools for reading, writing, and managing ABAP code in SAP systems.
+It exposes 19 essential tools (focused mode, default) or 45 complete tools (expert mode) for reading, writing, and managing ABAP code in SAP systems.
 
 Examples:
   # Using environment variables
@@ -77,7 +77,7 @@ func init() {
 	rootCmd.Flags().StringSliceVar(&cfg.AllowedPackages, "allowed-packages", nil, "Restrict operations to specific packages (comma-separated, supports wildcards like Z*)")
 
 	// Mode options
-	rootCmd.Flags().StringVar(&cfg.Mode, "mode", "focused", "Tool mode: focused (14 essential tools) or expert (all 43 tools)")
+	rootCmd.Flags().StringVar(&cfg.Mode, "mode", "focused", "Tool mode: focused (19 essential tools) or expert (all 45 tools)")
 
 	// Output options
 	rootCmd.Flags().BoolVarP(&cfg.Verbose, "verbose", "v", false, "Enable verbose output to stderr")

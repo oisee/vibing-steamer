@@ -5,7 +5,7 @@
 
 A Go-native MCP (Model Context Protocol) server for SAP ABAP Development Tools (ADT).
 
-Single-binary distribution of 43 ADT tools for use with Claude and other MCP-compatible AI assistants.
+Single-binary distribution with 19 essential tools (focused mode) or 45 complete tools (expert mode) for use with Claude and other MCP-compatible AI assistants.
 
 ## Why This Project?
 
@@ -29,7 +29,8 @@ This project stands on the shoulders of giants:
 
 **mcp-adt-go** is a complete rewrite in Go, providing:
 - Single binary with zero runtime dependencies
-- Extended toolset (39 vs 13 tools)
+- Extended toolset (45 tools vs 13 in original)
+- Dual modes: 19 focused tools (AI-optimized) or 45 expert tools (complete)
 - Full CRUD operations and code intelligence
 - ~50x faster startup time
 
@@ -101,7 +102,47 @@ Comparison of ADT capabilities across implementations:
 
 This guide follows emerging best practices for MCP documentation aimed at AI agents rather than human developers.
 
-## Available Tools (43)
+## Focused vs Expert Modes
+
+**mcp-adt-go** offers two operational modes to optimize AI assistant performance:
+
+### Focused Mode (Default) - 19 Tools
+
+**Recommended for most use cases.** Exposes a curated set of essential tools that reduce AI cognitive load and token overhead by 58%. Includes:
+- **Unified tools**: GetSource, WriteSource (replace 11 granular read/write tools)
+- **Enhanced search**: GrepObjects, GrepPackages (multi-object + recursive package search)
+- **Streamlined file ops**: ImportFromFile, ExportToFile (clearer naming)
+- **Core workflows**: EditSource, SearchObject, FindDefinition/References
+- **Data access**: GetTable, GetTableContents, RunQuery, GetCDSDependencies
+- **Development**: SyntaxCheck, RunUnitTests
+- **Advanced**: LockObject, UnlockObject
+
+**Enable:** `--mode=focused` (default, no flag needed)
+
+### Expert Mode - 45 Tools
+
+**For edge cases and debugging.** Exposes all tools including low-level atomic operations (CreateObject, UpdateSource, DeleteObject), specialized read operations (GetClassInclude with include types), and granular workflow tools. Maintains backward compatibility with existing workflows.
+
+**Enable:** `--mode=expert`
+
+### Token Savings
+
+- **Tool definitions**: 69% reduction (~6,500 → ~2,000 tokens)
+- **Typical workflow**: 73% reduction (~3,000 → ~800 tokens)
+- **Decision clarity**: 19 choices instead of 45
+
+## Available Tools (45)
+
+### Unified Tools (2 tools) - Focused Mode
+
+These tools replace 11 granular read/write operations with intelligent parameter-based routing:
+
+| Tool | Description | Replaces |
+|------|-------------|----------|
+| `GetSource` | Unified read tool for any ABAP source object. Parameters: `type` (PROG/CLAS/INTF/FUNC/FUGR/INCL), `name`, optional `parent` (for FUNC), optional `include` (for CLAS: definitions/implementations/testclasses) | GetProgram, GetClass, GetInterface, GetFunction, GetFunctionGroup, GetInclude, GetClassInclude |
+| `WriteSource` | Unified write tool with auto-upsert (detects create vs update). Parameters: `type`, `name`, `source`, `mode` (update/create/upsert), `options` (description, package, test_source, transport) | WriteProgram, WriteClass, CreateAndActivateProgram, CreateClassWithTests |
+
+**Benefits:** Reduces token overhead by 70%, simplifies tool selection, extensible for new object types.
 
 ### Read Operations (15 tools)
 
@@ -163,15 +204,17 @@ Workflow tools are **composite/multi-step operations** that combine multiple ADT
 
 These tools significantly simplify AI-assisted development by handling locking, error checking, and activation automatically.
 
-### File-Based Deployment Tools (3 tools)
+### File-Based Deployment Tools (5 tools)
 
 **Solves token limit problem** for large generated files (like ML models, complex classes). These tools read/write ABAP source files directly from the filesystem, bypassing Claude's token limits:
 
-| Tool | Description | Use Case |
-|------|-------------|----------|
-| `DeployFromFile` | ✅ **RECOMMENDED** - Smart deploy: auto-detects create vs update | Deploy any ABAP file (class, program, interface, function group/module) |
-| `SaveToFile` | Save ABAP object source to local file (SAP → File) | Export objects for version control, bidirectional sync |
-| `RenameObject` | Rename object by creating copy with new name | Fix naming conventions, refactor |
+| Tool | Description | Use Case | Mode |
+|------|-------------|----------|------|
+| `ImportFromFile` | ✅ **RECOMMENDED** (Focused) - File → SAP. Smart deploy: auto-detects create vs update | Deploy any ABAP file (class, program, interface, function group/module) | Focused |
+| `ExportToFile` | SAP → File. Save ABAP object source to local file | Export objects for version control, bidirectional sync | Focused |
+| `DeployFromFile` | Legacy name for ImportFromFile (still available in expert mode) | Same as ImportFromFile | Expert |
+| `SaveToFile` | Legacy name for ExportToFile (still available in expert mode) | Same as ExportToFile | Expert |
+| `RenameObject` | Rename object by creating copy with new name | Fix naming conventions, refactor | Expert |
 
 **Workflow executed:** Parse file → Detect type/name → Lock → Syntax check → Write → Unlock → Activate
 
@@ -185,7 +228,7 @@ These tools significantly simplify AI-assisted development by handling locking, 
 **Example:** Deploy a 3,948-line generated ML class without token limits:
 ```bash
 # Claude calls:
-DeployFromFile(file_path="/path/to/zcl_ml_iris.clas.abap", package_name="$ZAML_IRIS")
+ImportFromFile(file_path="/path/to/zcl_ml_iris.clas.abap", package_name="$ZAML_IRIS")
 ```
 
 ### Code Intelligence Tools (7 tools)
@@ -200,14 +243,16 @@ DeployFromFile(file_path="/path/to/zcl_ml_iris.clas.abap", package_name="$ZAML_I
 | `SetPrettyPrinterSettings` | Update formatter settings |
 | `GetTypeHierarchy` | Get type hierarchy (supertypes/subtypes) |
 
-### Grep/Search Tools (2 tools)
+### Grep/Search Tools (4 tools)
 
-| Tool | Description |
-|------|-------------|
-| `GrepObject` | Search for regex pattern in a single ABAP object. Returns matches with line numbers and optional context. |
-| `GrepPackage` | Search for regex pattern across all source objects in a package. Returns matches grouped by object. |
+| Tool | Description | Mode |
+|------|-------------|------|
+| `GrepObjects` | **UNIFIED** - Search for regex pattern in single or multiple ABAP objects. Array of object URLs, returns aggregated matches. | Focused |
+| `GrepPackages` | **UNIFIED** - Search across single or multiple packages with optional recursive subpackage search. Enables namespace-wide searches (e.g., all Z* packages). | Focused |
+| `GrepObject` | Search for regex pattern in a single ABAP object. Returns matches with line numbers and optional context. | Expert |
+| `GrepPackage` | Search for regex pattern across all source objects in a package. Returns matches grouped by object. | Expert |
 
-**Features:**
+**Features (all grep tools):**
 - Full regex support (Go regexp syntax)
 - Case-sensitive or case-insensitive matching
 - Context lines (like `grep -C`)
@@ -268,6 +313,7 @@ mcp-adt-go --help  # Show all options
 | `--insecure` | | Skip TLS certificate verification |
 | `--cookie-file` | | Path to Netscape-format cookie file |
 | `--cookie-string` | | Cookie string (`key1=val1; key2=val2`) |
+| `--mode` | | Tool mode: `focused` (19 tools, default) or `expert` (45 tools) |
 | `--verbose` | `-v` | Enable verbose logging to stderr |
 | `--version` | | Show version information |
 
@@ -283,6 +329,7 @@ mcp-adt-go --help  # Show all options
 | `SAP_INSECURE` | Skip TLS verification (`true`/`false`) |
 | `SAP_COOKIE_FILE` | Path to cookie file |
 | `SAP_COOKIE_STRING` | Cookie string |
+| `SAP_MODE` | Tool mode: `focused` (default) or `expert` |
 | `SAP_VERBOSE` | Enable verbose logging |
 
 ### .env File Support
@@ -400,7 +447,7 @@ vibing-steamer/
 │   ├── fileparser.go        # ABAP file parser (detect type/name from files)
 │   └── xml.go               # XML types and parsing
 ├── internal/mcp/            # MCP server implementation
-│   └── server.go            # Tool registration and handlers (39 tools)
+│   └── server.go            # Tool registration and handlers (45 tools, mode-aware)
 ├── reports/                 # Project documentation and research
 └── build/                   # Cross-platform binaries
 ```
