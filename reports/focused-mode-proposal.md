@@ -9,13 +9,15 @@
 
 ## Executive Summary
 
-**Objective:** Implement a "focused mode" that reduces the 42 MCP tools to ~13 essential tools, improving AI agent decision-making and reducing token overhead by ~70%.
+**Objective:** Implement a "focused mode" that reduces the 42 MCP tools to 14 essential tools, improving AI agent decision-making and reducing token overhead by ~70%.
 
 **Key Findings:**
 - Current token overhead: ~6,500 tokens for tool definitions
-- Focused mode target: ~2,000 tokens (69% reduction)
+- Focused mode target: ~2,150 tokens (67% reduction)
 - EditSource is 50x more token-efficient than WriteProgram
 - Composite tools cover 95% of use cases; atomic tools rarely needed directly
+- Source vs Metadata separation: GetSource (text) vs GetFunctionGroup/GetPackage (JSON)
+- CDS dependency analysis ready for implementation (REST API verified)
 
 **Recommendation:** ✅ **IMPLEMENT** focused mode as default, with expert mode for advanced users.
 
@@ -88,13 +90,13 @@
 ### FOCUSED MODE (Recommended Default)
 
 **Goal:** Reduce cognitive load, optimize token usage
-**Tools:** ~13 (instead of 42)
+**Tools:** 14 (instead of 42)
 
 #### Final Focused Mode Toolset
 
 ```
 ┌─────────────────────────────────────────────┐
-│         FOCUSED MODE (13 tools)             │
+│         FOCUSED MODE (14 tools)             │
 ├─────────────────────────────────────────────┤
 │                                             │
 │  🔍 SEARCH (mandatory foundation)          │
@@ -102,11 +104,14 @@
 │    • GrepPackage                            │
 │    • SearchObject                           │
 │                                             │
-│  📖 READ (unified)                          │
+│  📖 READ (unified + specialized)           │
 │    • GetSource(type, name, [parent], [include])│
-│      └─ type: PROG|CLAS|INTF|FUNC|FUGR|INCL│
-│    • GetTable(name) - separate (different structure)│
-│    • QueryData(sql | table_name) - merged  │
+│      └─ type: PROG|CLAS|INTF|FUNC|INCL    │
+│    • GetFunctionGroup(name) - metadata     │
+│    • GetPackage(name) - metadata           │
+│    • GetTable(name) - structure            │
+│    • GetCDSDependencies(ddls) 🆕 NEW       │
+│    • QueryData(sql | table_name)           │
 │                                             │
 │  ✏️ EDIT (surgical, primary)               │
 │    • EditSource ⭐ PRIMARY                  │
@@ -129,7 +134,7 @@
 │                                             │
 └─────────────────────────────────────────────┘
 
-Total: 13 tools (69% reduction)
+Total: 14 tools (67% reduction)
 ```
 
 ### EXPERT MODE (Full Access)
@@ -141,12 +146,14 @@ Total: 13 tools (69% reduction)
 #### Additional Expert Mode Tools
 
 - All atomic: UpdateSource, CreateObject, DeleteObject, CreateTestInclude
-- Specialized Read: GetFunctionGroup, GetStructure, GetTransaction, GetPackage, GetTypeInfo, GetTableContents, RunQuery
+- Specialized Read: GetStructure, GetTransaction, GetTypeInfo, GetTableContents, RunQuery, GetClassInclude
 - Specialized Write: WriteProgram, WriteClass, CreateAndActivateProgram, CreateClassWithTests
 - Class-specific: UpdateClassInclude
 - Navigation: GetTypeHierarchy, CodeCompletion
 - Format: PrettyPrint, Get/SetPrettyPrinterSettings
 - File-based: DeployFromFile, SaveToFile, RenameObject
+
+**Note:** GetFunctionGroup and GetPackage moved to Focused Mode (metadata tools)
 
 ---
 
@@ -154,25 +161,59 @@ Total: 13 tools (69% reduction)
 
 ### 1. GetSource Unification ✅ DECIDED
 
-**Decision:** Option C - Hybrid approach
+**Decision:** Option C - Hybrid approach (Source vs Metadata separation)
 
 **Implementation:**
 ```
 GetSource(type, name, [parent], [include])
-  type: PROG|CLAS|INTF|FUNC|FUGR|INCL
+  type: PROG|CLAS|INTF|FUNC|INCL (SOURCE CODE ONLY)
   parent: only for FUNC (function group name)
   include: only for CLAS (definitions|implementations|testclasses)
 
-GetTable(name) - separate (different response structure)
+GetFunctionGroup(name) - separate (returns metadata: FM list, includes)
+GetPackage(name) - separate (returns metadata: object list)
+GetTable(name) - separate (returns structure metadata)
+GetCDSDependencies(ddls) - NEW (returns dependency tree)
 QueryData(sql | table_name) - merged query tool
 ```
 
-**Rationale:**
-- GetSource handles all code objects uniformly
-- GetTable kept separate (returns structure, not source)
-- QueryData merges GetTableContents + RunQuery
+**Rationale - Source vs Metadata Distinction:**
 
-**Token savings:** ~70% reduction in read operation definitions
+| Tool | Returns | Type | Rationale |
+|------|---------|------|-----------|
+| GetSource | ABAP source code | text | Pure source code objects |
+| GetFunctionGroup | FM list + structure | JSON | **Metadata**, not source |
+| GetPackage | Object list | JSON | **Metadata**, not source |
+| GetTable | Field structure | JSON | **Metadata**, not source |
+| GetCDSDependencies | Dependency tree | JSON | **Metadata**, not source |
+
+**Critical Insight:** FUGR and DEVC (package) return **metadata about structure/contents**, not executable source code. Mixing source and metadata in one tool creates:
+- ❌ Conditional return types (text vs JSON)
+- ❌ Confusion for AI agents ("what type will I get?")
+- ❌ Loss of clear contract ("Get what?")
+
+**Why GetFunctionGroup is separate:**
+```json
+// GetFunctionGroup returns metadata:
+{
+  "name": "SYST",
+  "description": "System Fields",
+  "functionModules": [
+    {"name": "SYSTEM_INIT", "include": "LSYSTU01"},
+    {"name": "SYSTEM_RESET", "include": "LSYSTU02"}
+  ],
+  "includes": [
+    {"name": "LSYSTTOP", "type": "TOP"}
+  ]
+}
+```
+
+This is **not source code** - it's structural metadata. To get actual FM source, use:
+```
+GetSource(FUNC, "SYSTEM_INIT", "SYST")
+```
+
+**Token savings:** ~65% reduction in read operation definitions
 
 ---
 
@@ -252,32 +293,113 @@ QueryData(query)
 
 ---
 
+### 6. GetCDSDependencies Tool 🆕 NEW
+
+**Decision:** Add CDS dependency analyzer to Focused Mode
+
+**Status:** ✅ READY FOR IMPLEMENTATION (REST API verified)
+
+**Implementation:**
+```
+GetCDSDependencies(ddls_name, [dependency_level], [with_associations])
+  ddls_name: CDS DDL source name (e.g., "I_SalesOrder")
+  dependency_level: "unit" | "hierarchy" (default: hierarchy)
+  with_associations: include modeled associations (default: false)
+
+Returns: Recursive dependency tree (JSON)
+```
+
+**Rationale:**
+- **S/4HANA critical** - Modern ABAP heavily uses CDS views
+- **Impact analysis** - See what breaks before modifying a view
+- **Data lineage** - Trace where fields originate
+- **Cycle detection** - Find circular dependencies
+- **AI enablement** - Agents can reason about dependencies
+
+**Backend API:**
+- Endpoint: `/sap/bc/adt/cds/dependencies`
+- Handler: `CL_CDS_RES_DEPENDENCIES` (SABP_UNIT_DOUBLE_CDS_CORE)
+- Parser: `CL_CDS_TEST_DDL_HIER_PARSER`
+- Analyzer: `CL_DDLS_DEPENDENCY_VISITOR` (SDDIC_ADT_DDLS_TOOLS)
+
+**Use Cases:**
+1. **Impact Analysis**: "What Fiori apps will break if I modify this view?"
+2. **Data Lineage**: "Where does CUSTOMER_NAME come from in our report?"
+3. **Activation Troubleshooting**: "Which dependency is INACTIVE?"
+4. **Circular Dependencies**: "Why won't this view activate?"
+
+**Example Output:**
+```json
+{
+  "ddls_name": "ZDDL_SALES_ORDER",
+  "dependency_tree": {
+    "name": "ZDDL_SALES_ORDER",
+    "type": "CDS_VIEW",
+    "activation_state": "ACTIVE",
+    "children": [
+      {
+        "name": "I_SALESORDER",
+        "type": "CDS_VIEW",
+        "relation": "FROM",
+        "children": [
+          {"name": "VBAK", "type": "TABLE", "relation": "FROM"},
+          {"name": "I_CUSTOMER", "type": "CDS_VIEW", "relation": "LEFT_OUTER_JOIN"}
+        ]
+      }
+    ]
+  },
+  "statistics": {
+    "total_dependencies": 15,
+    "by_type": {"TABLE": 3, "CDS_VIEW": 12}
+  }
+}
+```
+
+**Estimated Effort:** 2-3 days (REST API already exists)
+
+**Related Report:** [CDS Tool Analysis](2025-12-04-cds-tool-and-object-type-analysis.md)
+
+---
+
 ## Implementation Plan
 
-### Phase 1: Unification (2-3 days)
+### Phase 1: CDS Dependencies + Unification (3-5 days)
 
 **Files to modify:**
+- `pkg/adt/cds.go` - NEW FILE for CDS dependencies
 - `pkg/adt/client.go` - add `GetSource()` method
 - `pkg/adt/workflows.go` - add `WriteSource()`, `QueryData()` methods
 - `internal/mcp/server.go` - add new tool handlers
 
 **Implementation:**
-1. Create `GetSource(type, name, parent, include)`
+
+**1a. Create `GetCDSDependencies` (2 days)**
+   - Create `pkg/adt/cds.go` with:
+     - `CDSDependencyNode` struct
+     - `GetCDSDependencies(ctx, ddlsName, opts)` method
+     - Helper methods: `FlattenDependencies()`, `CountDependenciesByType()`, `FindCycles()`
+   - Add MCP tool handler in `server.go`
+   - Integration test with real CDS view
+   - Verify endpoint: `/sap/bc/adt/cds/dependencies`
+
+**1b. Create `GetSource(type, name, parent, include)` (1 day)**
    - Switch on type → delegate to existing Get* methods
    - Validate conditional parameters (parent for FUNC, include for CLAS)
+   - Note: FUGR excluded (returns metadata, not source)
 
-2. Create `WriteSource(type, name, source, mode, options)`
+**1c. Create `WriteSource(type, name, source, mode, options)` (1 day)**
    - mode="create" → delegate to CreateAndActivateProgram/CreateClassWithTests
    - mode="update" → delegate to WriteProgram/WriteClass
    - Return error if mode not specified
 
-3. Create `QueryData(query)`
+**1d. Create `QueryData(query)` (4 hours)**
    - If query matches `^\w+$` → treat as table name → `SELECT * FROM {table}`
    - Otherwise → freestyle SQL → RunQuery
 
 **Testing:**
 - Unit tests for parameter validation
 - Integration tests for each type combination
+- CDS dependency test with `ACM_DDDDLSRC` view
 - Backward compatibility tests
 
 ---
@@ -311,11 +433,11 @@ QueryData(query)
    ```
 
 3. Tool categorization:
-   - Create `focusedTools` slice (13 tools)
-   - Create `expertTools` slice (29 additional tools)
+   - Create `focusedTools` slice (14 tools)
+   - Create `expertTools` slice (28 additional tools)
 
 **Testing:**
-- Test focused mode registration (13 tools only)
+- Test focused mode registration (14 tools only)
 - Test expert mode registration (42 tools)
 - Test default mode (focused)
 
@@ -334,7 +456,10 @@ QueryData(query)
    ## Modes
 
    ### Focused Mode (Default)
-   13 essential tools optimized for AI agents...
+   14 essential tools optimized for AI agents...
+
+   Includes: GetCDSDependencies (NEW), GetSource (unified),
+   GetFunctionGroup, GetPackage, and more.
 
    ### Expert Mode
    All 42 tools for advanced workflows...
@@ -364,21 +489,29 @@ QueryData(query)
 
 **Release notes:**
 ```markdown
-## v1.6.0 - Focused Mode
+## v1.6.0 - Focused Mode + CDS Dependencies
 
 ### Breaking Changes
-- Default mode is now "focused" (13 tools instead of 42)
+- Default mode is now "focused" (14 tools instead of 42)
 - Use `--mode=expert` to access all 42 tools
 
 ### New Features
-- GetSource(type, name, [parent], [include]) - unified read
+- GetCDSDependencies(ddls_name) - CDS dependency analyzer 🆕
+- GetSource(type, name, [parent], [include]) - unified read (source only)
+- GetFunctionGroup, GetPackage kept separate (metadata tools)
 - WriteSource(type, name, source, mode, options) - unified write
 - QueryData(sql | table_name) - unified data access
-- Focused mode reduces token overhead by 69%
+- Focused mode reduces token overhead by 67%
+
+### Key Insight
+- Source vs Metadata separation: GetSource returns text (ABAP source),
+  metadata tools (GetFunctionGroup, GetPackage, GetCDSDependencies)
+  return JSON structures
 
 ### Migration Guide
 - If using all tools, add `--mode=expert` to your configuration
 - New workflows should use focused mode for better efficiency
+- GetCDSDependencies enables S/4HANA CDS impact analysis
 ```
 
 ---
@@ -387,16 +520,18 @@ QueryData(query)
 
 ### Token Savings
 
-| Aspect | Current (42 tools) | Focused (13 tools) | Savings |
+| Aspect | Current (42 tools) | Focused (14 tools) | Savings |
 |--------|-------------------|-------------------|---------|
-| Tool definitions | ~6,500 tokens | ~2,000 tokens | **69%** |
-| Typical workflow | ~3,000 tokens | ~800 tokens | **73%** |
+| Tool definitions | ~6,500 tokens | ~2,150 tokens | **67%** |
+| Typical workflow | ~3,000 tokens | ~850 tokens | **72%** |
 
 ### Tool Selection Quality
 
-- **Less confusion** for AI agents (13 instead of 42)
+- **Less confusion** for AI agents (14 instead of 42)
 - **Clearer decision paths** (search → edit vs full rewrite)
 - **Better defaults** (explicit create/update, EditSource primary)
+- **Source vs Metadata** clarity (consistent return types per tool category)
+- **S/4HANA enablement** (CDS dependency analysis built-in)
 
 ### Backward Compatibility
 
@@ -474,21 +609,22 @@ QueryData(query)
 
 | Phase | Duration | Deliverables |
 |-------|----------|--------------|
-| Phase 1: Unification | 2-3 days | GetSource, WriteSource, QueryData |
+| Phase 1: CDS + Unification | 3-5 days | GetCDSDependencies, GetSource, WriteSource, QueryData |
 | Phase 2: Modes | 1-2 days | CLI flag, mode filtering |
 | Phase 3: Documentation | 1 day | README, MCP_USAGE.md updates |
 | Phase 4: Migration | 1 day | Release notes, testing |
-| **Total** | **5-7 days** | v1.6.0 release |
+| **Total** | **6-9 days** | v1.6.0 release |
 
 ---
 
 ## Success Criteria
 
-1. ✅ Focused mode reduces token overhead by 60%+ (target: 69%)
+1. ✅ Focused mode reduces token overhead by 60%+ (target: 67%)
 2. ✅ AI agents make fewer tool selection errors
 3. ✅ All existing workflows work in expert mode
 4. ✅ Integration tests pass for both modes
 5. ✅ Documentation clearly explains mode selection
+6. ✅ GetCDSDependencies enables S/4HANA dependency analysis
 
 ---
 
@@ -496,19 +632,27 @@ QueryData(query)
 
 **Recommendation:** ✅ **PROCEED WITH IMPLEMENTATION**
 
-Focused mode is a significant quality-of-life improvement for AI agents, reducing token overhead by 69% and simplifying tool selection from 42 to 13 tools. The dual-mode architecture preserves backward compatibility while providing a better default experience.
+Focused mode is a significant quality-of-life improvement for AI agents, reducing token overhead by 67% and simplifying tool selection from 42 to 14 tools. The dual-mode architecture preserves backward compatibility while providing a better default experience.
 
 **Key success factors:**
-1. Unified tools (GetSource, WriteSource, QueryData) reduce fragmentation
-2. Explicit mode parameter (create/update) prevents accidents
-3. Focused mode as default guides users toward efficient workflows
-4. Expert mode preserves power-user capabilities
+1. **Source vs Metadata separation** - Clear distinction prevents type confusion
+2. **GetCDSDependencies** - Enables S/4HANA impact analysis and data lineage
+3. **Unified tools** (GetSource, WriteSource, QueryData) reduce fragmentation
+4. **Explicit mode parameter** (create/update) prevents accidents
+5. **Focused mode as default** guides users toward efficient workflows
+6. **Expert mode** preserves power-user capabilities
 
-**Next step:** Begin Phase 1 (Unification) implementation.
+**Critical insights:**
+- FUGR and PACKAGE return metadata (JSON), not source code (text)
+- Keeping them separate maintains clear tool contracts
+- CDS dependency analysis is critical for modern S/4HANA development
+
+**Next step:** Begin Phase 1 (CDS Dependencies + Unification) implementation.
 
 ---
 
-**Document Version:** 1.0
+**Document Version:** 1.1 (Updated with CDS Dependencies + FUGR/PACKAGE analysis)
 **Status:** Planning Complete - Approved for Implementation
 **Author:** Alice + Claude Code
 **Date:** 2025-12-04
+**Related:** [CDS Tool Analysis](2025-12-04-cds-tool-and-object-type-analysis.md)
