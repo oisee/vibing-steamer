@@ -3,7 +3,7 @@ cookies
 
 # Sub-repos
 mcp-abap-adt/
-abap-adt-api-lib/
+/abap-adt-api-lib/
 
 # MCP config (contains credentials)
 .mcp.json
