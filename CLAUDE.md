@@ -262,6 +262,9 @@ All research reports, analysis documents, and design specifications follow this 
 - **003:** ADT-Assisted Universal Deployment - Factory Pattern strategy via vsp (ADT-native)
 - **004:** ExecuteABAP Implementation - ABAP code execution via Unit Test wrapper (385 LOC, 2 tests)
 - **014:** External Debugger Scripting Vision - Watchpoints API, AI-powered debugger scripting architecture
+- **017:** AMDP Debugging & UI5/BSP Capabilities - Investigation of ADT endpoints
+- **018:** AMDP Debugger Testing - Test class, API verification, session lock findings
+- **019:** AMDP Session Architecture & Solutions - Root cause analysis, 3 proposed solutions
 
 #### Reference Documentation (Non-numbered)
 - `abap-adt-discovery-guide.md` - ADT API discovery process
@@ -303,7 +306,7 @@ When creating a new report:
 | **Integration Tests** | 34 |
 | **Platforms** | 9 |
 | **Phase** | 4 (Native ADT Features) - In Progress |
-| **Reports** | 17 numbered + 6 reference docs |
+| **Reports** | 20 numbered + 6 reference docs |
 | **Cache Package** | ✅ Complete (in-memory + SQLite) |
 | **Safety System** | ✅ Complete (operation filtering, package restrictions) |
 | **DSL Package** | ✅ Complete (fluent API, YAML workflows, test orchestration) |
@@ -315,7 +318,7 @@ When creating a new report:
 | **SQL Trace** | ✅ Complete (GetSQLTraceState, ListSQLTraces - ST05) |
 | **RAP OData E2E** | ✅ Complete (DDLS, SRVD, SRVB create + publish) |
 | **External Debugger** | ✅ Complete (Breakpoints, Debug Listener, Debuggee parsing) |
-| **AMDP Debugger** | ✅ Complete (HANA SQLScript debugging via ADT) |
+| **AMDP Debugger** | ⚠️ Limited (API works, needs session persistence - see Report 019) |
 | **UI5/BSP Mgmt** | ✅ Partial (Read ops work; Create needs alternate API) |
 | **Tool Groups** | ✅ Complete (--disabled-groups: 5/U, T, H, D) |
 
