@@ -199,13 +199,14 @@ func (s *Server) registerTools(mode string, disabledGroups string) {
 		"FindDefinition":  true,
 		"FindReferences":  true,
 
-		// Development tools (6)
+		// Development tools (7)
 		"SyntaxCheck":         true,
 		"RunUnitTests":        true,
 		"RunATCCheck":         true, // Code quality checks
 		"Activate":            true, // Re-activate objects without editing
 		"PrettyPrint":         true, // Format ABAP code
 		"GetInactiveObjects":  true, // List pending activations
+		"CreatePackage":       true, // Create local packages ($...)
 
 		// Advanced/Edge cases (2)
 		"LockObject":   true,
@@ -952,6 +953,23 @@ func (s *Server) registerTools(mode string, disabledGroups string) {
 	), s.handleCreateObject)
 	}
 
+	// CreatePackage - simplified package creation for focused mode
+	if shouldRegister("CreatePackage") {
+		s.mcpServer.AddTool(mcp.NewTool("CreatePackage",
+		mcp.WithDescription("Create a new local ABAP package. Only local packages (starting with $) are supported. For development/testing purposes."),
+		mcp.WithString("name",
+			mcp.Required(),
+			mcp.Description("Package name (must start with $, e.g., $ZTEST, $ZLOCAL_DEV)"),
+		),
+		mcp.WithString("description",
+			mcp.Required(),
+			mcp.Description("Package description"),
+		),
+		mcp.WithString("parent",
+			mcp.Description("Parent package name (optional, e.g., $TMP). If not specified, creates a root-level local package."),
+		),
+	), s.handleCreatePackage)
+	}
 
 	// DeleteObject
 	if shouldRegister("DeleteObject") {
@@ -2561,6 +2579,52 @@ func (s *Server) handleCreateObject(ctx context.Context, request mcp.CallToolReq
 	result := map[string]string{
 		"status":     "created",
 		"object_url": objURL,
+	}
+	output, _ := json.MarshalIndent(result, "", "  ")
+	return mcp.NewToolResultText(string(output)), nil
+}
+
+func (s *Server) handleCreatePackage(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	name, ok := request.Params.Arguments["name"].(string)
+	if !ok || name == "" {
+		return newToolResultError("name is required"), nil
+	}
+
+	// Validate package name starts with $
+	name = strings.ToUpper(name)
+	if !strings.HasPrefix(name, "$") {
+		return newToolResultError("package name must start with $ (local packages only)"), nil
+	}
+
+	description, ok := request.Params.Arguments["description"].(string)
+	if !ok || description == "" {
+		return newToolResultError("description is required"), nil
+	}
+
+	parent := ""
+	if p, ok := request.Params.Arguments["parent"].(string); ok && p != "" {
+		parent = strings.ToUpper(p)
+	}
+
+	opts := adt.CreateObjectOptions{
+		ObjectType:  adt.ObjectTypePackage,
+		Name:        name,
+		Description: description,
+		PackageName: parent, // Parent package
+	}
+
+	err := s.adtClient.CreateObject(ctx, opts)
+	if err != nil {
+		return newToolResultError(fmt.Sprintf("Failed to create package: %v", err)), nil
+	}
+
+	result := map[string]string{
+		"status":      "created",
+		"package":     name,
+		"description": description,
+	}
+	if parent != "" {
+		result["parent"] = parent
 	}
 	output, _ := json.MarshalIndent(result, "", "  ")
 	return mcp.NewToolResultText(string(output)), nil
