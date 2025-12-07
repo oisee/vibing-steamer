@@ -1,9 +1,11 @@
 # Vibing Steampunk (vsp)
 
-**AI-Agentic Development Unlocked for ABAP** — ECC, S/4HANA, BTP, everywhere.
+**AI-Agentic Development Unlocked for ABAP** — ECC, S/4HANA, everywhere ADT is available.
 
-> MCP server that gives Claude (and other AI assistants) full access to SAP ADT APIs.
+> **ADT ↔ MCP Bridge**: Gives Claude (and other AI assistants) full access to SAP ADT APIs.
 > Read code, write code, debug, deploy, run tests — all through natural language.
+>
+> See also: [OData ↔ MCP Bridge](https://github.com/oisee/odata_mcp_go) for SAP data access.
 
 ![Vibing ABAP Developer](./media/vibing-steampunk.png)
 
